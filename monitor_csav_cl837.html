@@ -2842,21 +2842,11 @@ const DataStore = (() => {
       mac: "",
       points: [],
       lastValid: {
-        tSkin: NaN,
-        tAmb: NaN,
-        hum: NaN,
-        pres: NaN,
-        gas: NaN,
-        humidex: NaN,
-        grad: NaN,
-        dt_dt: NaN,
-        hr: NaN,
-        spo2: NaN,
-        charge: NaN,
-        pi: NaN,
-        piGrn: NaN,
-        rri: NaN
+        tSkin: NaN, tAmb: NaN, hum: NaN, pres: NaN, gas: NaN,
+        humidex: NaN, grad: NaN, dt_dt: NaN, hr: NaN, spo2: NaN,
+        charge: NaN, pi: NaN, piGrn: NaN, rri: NaN
       },
+      lastValidTs: {},
       riskSeconds: {
         safe: 0,
         caution: 0,
@@ -2899,7 +2889,7 @@ const DataStore = (() => {
   }
 
   function remember(key, value) {
-    if (isMetric(value)) state.lastValid[key] = value;
+    if (isMetric(value)) { state.lastValid[key] = value; state.lastValidTs[key] = Date.now(); }
   }
 
   function pick(current, key) {
@@ -4244,52 +4234,76 @@ const UI = (() => {
 
   function resolveCardHr(pkt) {
     const quality = pkt.contact_quality || "NONE";
-    const lastHr = DataStore.getState().lastValid.hr;
+    const dsState = DataStore.getState();
+    const lastHr  = dsState.lastValid.hr;
+    const lastHrTs = dsState.lastValidTs?.hr || 0;
+    const hrStaleMs = lastHrTs > 0 ? Date.now() - lastHrTs : Infinity;
 
+    // Caso 1: firmware reporta HR válida → mostrar y guardar en hold
     if (pkt.hr_valid && pkt.hr_display > 0) {
       hold.hrValue = pkt.hr_display + " BPM";
       hold.hrTs = Date.now();
       return {
         value: hold.hrValue,
+        stale: false,
         sub: quality + (Number.isFinite(pkt.pi) && pkt.pi > 0 ? " · PI " + pkt.pi.toFixed(2) + "%" : "")
       };
     }
 
+    // Caso 2: señal óptica presente (GOOD/WEAK) pero hr_valid=false durante >8s
+    // → firmware está recibiendo señal pero no puede decodificar BPM
+    // (HR fuera de rango del firmware, PI_IR bajo, o re-adquisición en curso)
+    if (quality !== "NONE" && hrStaleMs > 8000) {
+      const piInfo = Number.isFinite(pkt.pi) && pkt.pi > 0
+        ? " · PI " + pkt.pi.toFixed(2) + "%"
+        : " · PI bajo";
+      return {
+        value: Number.isFinite(lastHr) ? Math.round(lastHr) + " *" : "—",
+        stale: true,
+        sub: "Señal óptica activa" + piInfo + " — re-adquiriendo FC…"
+      };
+    }
+
+    // Caso 3: hold de 4s (contacto presente, breve pérdida de beat)
     if (quality !== "NONE" && hold.hrValue !== "--" && (Date.now() - hold.hrTs) < HR_HOLD_MS) {
       return {
         value: hold.hrValue,
+        stale: false,
         sub: "Manteniendo último BPM válido mientras se estabiliza la señal."
       };
     }
 
+    // Caso 4: señal débil con valor previo conocido
     if (quality === "WEAK") {
       return {
-        value: Number.isFinite(lastHr) ? Math.round(lastHr) + " BPM" : "débil",
+        value: Number.isFinite(lastHr) ? Math.round(lastHr) + " *" : "débil",
+        stale: true,
         sub: Number.isFinite(lastHr)
-          ? "Señal débil. Conservando el último BPM útil."
-          : "Hay contacto, pero la señal todavía no alcanza consistencia."
+          ? "Señal débil · último BPM registrado"
+          : "Hay contacto pero la señal no alcanza consistencia."
       };
     }
 
+    // Caso 5: sin contacto, mostrar último conocido con indicador de antigüedad
     if (Number.isFinite(lastHr)) {
       hold.hrValue = Math.round(lastHr) + " BPM";
       return {
         value: hold.hrValue,
-        sub: "Último valor útil retenido. La interfaz no se vacía ante una pérdida breve."
+        stale: true,
+        sub: "Sin contacto · último valor de sesión"
       };
     }
 
     hold.hrValue = "--";
-    return {
-      value: "--",
-      sub: "Sin contacto útil en este momento."
-    };
+    return { value: "--", stale: false, sub: "Sin contacto útil." };
   }
 
   function renderDashboard(pkt) {
     const hrCard = resolveCardHr(pkt);
     const view = pkt.display || {};
     Utils.$("cardHr").textContent = hrCard.value;
+    Utils.$("cardHr").style.opacity = hrCard.stale ? "0.55" : "";
+    Utils.$("cardHr").style.fontStyle = hrCard.stale ? "italic" : "";
     Utils.$("cardHrSub").textContent = hrCard.sub;
 
     Utils.$("cardSpo2").textContent = Number.isFinite(view.spo2) ? Utils.fmt(view.spo2, 1) + " %" : "--";
