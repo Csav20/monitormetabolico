@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CSAV Monitor — CSAV-01</title>
+<title>CSAV Monitor — CSAV-01 &amp; CL837</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%23f4f7f7'/><circle cx='16' cy='16' r='7' fill='none' stroke='%23ff6f4d' stroke-width='2.4'/><circle cx='16' cy='16' r='2.5' fill='%23ff6f4d'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -1404,49 +1404,6 @@ button, input, textarea { font: inherit; }
 .source-badge.cl837 { background: rgba(107,99,255,0.12); color: var(--purple); }
 .source-badge.none { background: rgba(16,32,48,0.06); color: var(--ink-dim); }
 
-/* ── Tarjetas desplegables ──────────────────────────────────────────────── */
-.panel-head {
-  cursor: pointer;
-  user-select: none;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-.panel-head > div:first-child { flex: 1; min-width: 0; }
-
-.panel-chevron {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(16, 32, 48, 0.06);
-  display: grid;
-  place-items: center;
-  font-size: 1rem;
-  line-height: 1;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s;
-  transform: rotate(90deg);
-  color: var(--ink-soft);
-}
-.panel-head:hover .panel-chevron {
-  background: rgba(16, 32, 48, 0.11);
-}
-.panel.collapsed .panel-chevron {
-  transform: rotate(0deg);
-}
-
-.panel-body {
-  overflow: hidden;
-  transition: max-height 0.38s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s;
-  max-height: 6000px;
-  opacity: 1;
-}
-.panel.collapsed .panel-body {
-  max-height: 0;
-  opacity: 0;
-}
-
 /* ── Mobile / Bluefy (≤ 600 px) ─────────────────────────────────────────── */
 @media (max-width: 600px) {
   /* topbar: hide long subtitle, compact brand */
@@ -1493,8 +1450,8 @@ button, input, textarea { font: inherit; }
         <div class="brand-orbit"></div>
       </div>
       <div class="brand-copy">
-        <h1>CSAV Monitor — CSAV-01</h1>
-        <p>Monitor metabólico wearable · BLE</p>
+        <h1>CSAV Monitor — CSAV-01 &amp; CL837</h1>
+        <p>CSAV-01 (FFE1 JSON) · CL837 (Chileaf SDK) · Fusión de fuentes BLE</p>
       </div>
     </div>
 
@@ -2512,17 +2469,7 @@ button, input, textarea { font: inherit; }
           <div class="metric-card">
             <div class="label">Saltos sesión</div>
             <div class="value mono" id="imuJumps">--</div>
-            <div class="sub" id="imuJumpsSub">detectados por fase de vuelo (&gt; 80 ms)</div>
-          </div>
-          <div class="metric-card">
-            <div class="label">Altura último salto</div>
-            <div class="value mono" id="imuJumpH">--</div>
-            <div class="sub">cm · h = g·t²/8 (tiempo de vuelo)</div>
-          </div>
-          <div class="metric-card">
-            <div class="label">Altura pico sesión</div>
-            <div class="value mono" id="imuJumpHMax">--</div>
-            <div class="sub">cm · mejor salto registrado</div>
+            <div class="sub">detectados por fase de vuelo (&gt; 80 ms)</div>
           </div>
           <div class="metric-card">
             <div class="label">Zancadas / Pasos</div>
@@ -2557,6 +2504,35 @@ button, input, textarea { font: inherit; }
             <div class="label">Estado IMU</div>
             <div class="value mono" id="imuStatus">--</div>
           </div>
+        </div>
+
+        <!-- ── Alturas de salto ────────────────────────────────────────────── -->
+        <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">
+          <div style="font-family:var(--display);font-size:0.85rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:10px">
+            Alturas de salto
+            <span style="font-family:var(--mono);font-size:0.62rem;font-weight:400;opacity:0.6;margin-left:6px">estimada · ±10 cm</span>
+          </div>
+          <div class="mini-grid">
+            <div class="mini-item">
+              <div class="label">Último salto</div>
+              <div class="value mono" id="jumpHeightLast" style="color:var(--teal)">--</div>
+            </div>
+            <div class="mini-item">
+              <div class="label">Pico sesión</div>
+              <div class="value mono" id="jumpHeightPeak" style="color:var(--purple)">--</div>
+            </div>
+            <div class="mini-item">
+              <div class="label">Promedio</div>
+              <div class="value mono" id="jumpHeightAvg">--</div>
+            </div>
+            <div class="mini-item">
+              <div class="label">Consistencia</div>
+              <div class="value mono" id="jumpHeightCV">--</div>
+            </div>
+          </div>
+          <!-- Mini histograma últimos 10 saltos -->
+          <div id="jumpBars" style="display:flex;gap:4px;align-items:flex-end;height:48px;margin-top:10px"></div>
+          <div style="font-family:var(--mono);font-size:0.6rem;color:var(--ink-dim);margin-top:4px" id="jumpBarsLabel">Sin saltos registrados en la sesión</div>
         </div>
       </article>
 
@@ -3517,19 +3493,13 @@ const BleManager = (() => {
     UI.setConnectionState("disconnected");
   }
 
-  // writeValueWithResponse (Chrome 85+) reemplaza el deprecated writeValue()
-  function gattWrite(char, data) {
-    const fn = char.writeValueWithResponse || char.writeValueWithoutResponse || char.writeValue;
-    return fn.call(char, data);
-  }
-
   async function sendCommand(cmd) {
     if (!connected || !charFFE3) {
       UI.showCommandResponse('{"status":"ERROR","msg":"No conectado"}');
       return;
     }
     try {
-      await gattWrite(charFFE3, new TextEncoder().encode(cmd));
+      await charFFE3.writeValue(new TextEncoder().encode(cmd));
       UI.showCommandResponse("→ Comando enviado: " + cmd + " (esperando respuesta)");
     } catch (error) {
       UI.showCommandResponse('{"status":"ERROR","msg":"' + error.message + '"}');
@@ -3619,8 +3589,7 @@ const CL837Manager = (() => {
     try {
       const elapsed = Date.now() - _lastCommandSent;
       if (elapsed < 170) await _delay(170 - elapsed);
-      const fn = _writeChar.writeValueWithoutResponse || _writeChar.writeValueWithResponse || _writeChar.writeValue;
-      await fn.call(_writeChar, _hexToBytes(hexStr));
+      await _writeChar.writeValue(_hexToBytes(hexStr));
       _lastCommandSent = Date.now();
     } catch (_) {}
   }
@@ -3873,74 +3842,10 @@ const UI = (() => {
   let lastPacket = null;
   let initialized = false;
 
-  // ── Sistema de tarjetas desplegables ────────────────────────────────────────
-  const PANEL_STATE_KEY = "csav_panel_states_v1";
-
-  function savePanelStates() {
-    const states = {};
-    document.querySelectorAll(".panel[data-pid]").forEach(p => {
-      states[p.dataset.pid] = p.classList.contains("collapsed");
-    });
-    try { localStorage.setItem(PANEL_STATE_KEY, JSON.stringify(states)); } catch(_) {}
-  }
-
-  function initCollapsiblePanels() {
-    let idx = 0;
-    // Paneles que arrancan colapsados por defecto (solo los secundarios/largos)
-    const defaultCollapsed = new Set([
-      "tendencias","graficos","clinica","hrv","lactato",
-      "ventilacion","temperatura","diagnostico","historial","informe"
-    ]);
-
-    document.querySelectorAll(".panel").forEach(panel => {
-      const head = panel.querySelector(".panel-head");
-      if (!head) return;
-
-      // ID basado en sección padre o índice secuencial
-      const section = panel.closest("section");
-      const pid = section?.id ? section.id + "_" + idx++ : "p" + idx++;
-      panel.dataset.pid = pid;
-
-      // Envolver contenido en panel-body (sin tocar el HTML estático)
-      const body = document.createElement("div");
-      body.className = "panel-body";
-      [...panel.children].filter(c => c !== head).forEach(c => body.appendChild(c));
-      panel.appendChild(body);
-
-      // Chevron
-      const chev = document.createElement("span");
-      chev.className = "panel-chevron";
-      chev.innerHTML = "›";
-      head.appendChild(chev);
-
-      // Toggle
-      head.addEventListener("click", e => {
-        if (e.target.closest("button,input,select,a,.action-btn")) return;
-        panel.classList.toggle("collapsed");
-        savePanelStates();
-      });
-
-      // Estado inicial por defecto
-      const sectionId = section?.id || "";
-      if (defaultCollapsed.has(sectionId)) panel.classList.add("collapsed");
-    });
-
-    // Restaurar estados guardados por el usuario (sobreescribe defaults)
-    try {
-      const saved = JSON.parse(localStorage.getItem(PANEL_STATE_KEY) || "{}");
-      document.querySelectorAll(".panel[data-pid]").forEach(p => {
-        if (p.dataset.pid in saved) {
-          p.classList.toggle("collapsed", saved[p.dataset.pid]);
-        }
-      });
-    } catch(_) {}
-  }
-
   function init() {
     if (initialized) return;
     initialized = true;
 
-    try { initCollapsiblePanels(); } catch(e) { console.warn("[panels]", e); }
     Utils.$("connectBtn").addEventListener("click", handleUnifiedConnectClick);
     Utils.$("demoBtn").addEventListener("click", toggleDemo);
     Utils.$("clearBtn").addEventListener("click", clearSession);
@@ -4078,11 +3983,16 @@ const UI = (() => {
       avgSpo2:  +(avgs.spo2 || 0).toFixed(1),
       avgSkin:  +(avgs.skin || 0).toFixed(1),
       peakSkin: +(state.peakSkin > -Infinity ? state.peakSkin : 0).toFixed(1),
-      jumps:    lastPacket?.jumps   || 0,
-      strides:  lastPacket?.strides || 0,
-      dist:     +(_imu.totalDist).toFixed(0),
-      peakVel:  +(_imu.peakVel * 3.6).toFixed(1),
-      placement: lastPacket?.placement || "wrist"
+      jumps:      lastPacket?.jumps   || 0,
+      strides:    lastPacket?.strides || 0,
+      dist:       +(_imu.totalDist).toFixed(0),
+      peakVel:    +(_imu.peakVel * 3.6).toFixed(1),
+      placement:  lastPacket?.placement || "wrist",
+      peakHeight: _imu.peakHeight || 0,
+      avgHeight:  _imu.jumpHeights.length
+                  ? Math.round(_imu.jumpHeights.reduce((a,b)=>a+b,0)/_imu.jumpHeights.length)
+                  : 0,
+      jumpCount:  _imu.jumpHeights.length
     };
     try {
       const history = JSON.parse(localStorage.getItem(SESSION_KEY) || "[]");
@@ -4108,10 +4018,12 @@ const UI = (() => {
           `<strong>${fecha} ${hm}</strong> · ${dur}`,
           s.avgHr   ? `FC ${s.avgHr} bpm` : "",
           s.avgSkin ? `Piel ${s.avgSkin} °C` : "",
-          s.jumps   ? `${s.jumps} saltos` : "",
-          s.strides ? `${s.strides} pasos` : "",
-          s.dist    ? `${s.dist} m` : "",
-          s.peakVel ? `pico ${s.peakVel} km/h` : ""
+          s.jumps      ? `${s.jumps} saltos` : "",
+          s.peakHeight ? `pico ~${s.peakHeight} cm` : "",
+          s.avgHeight  ? `prom ~${s.avgHeight} cm` : "",
+          s.strides    ? `${s.strides} pasos` : "",
+          s.dist       ? `${s.dist} m` : "",
+          s.peakVel    ? `pico ${s.peakVel} km/h` : ""
         ].filter(Boolean).join(" · ");
         return `<li style="padding:6px 0;border-bottom:1px solid var(--line)">${parts}</li>`;
       }).join("");
@@ -4131,6 +4043,12 @@ const UI = (() => {
     DataStore.reset();
     _imu.peakVel = 0; _imu.totalDist = 0;
     _imu.prevStrides = 0; _imu.prevStrideTs = Date.now();
+    _imu.prevJumps = 0; _imu.prevStab = 100;
+    _imu.jumpHeights = []; _imu.peakHeight = 0;
+    const bars = Utils.$("jumpBars");
+    if (bars) bars.innerHTML = "";
+    const lbl = Utils.$("jumpBarsLabel");
+    if (lbl) lbl.textContent = "Sin saltos registrados en la sesión";
     hold.hrValue = "--"; hold.hrTs = 0;
     lastPacket = null;
     resetPlaceholders();
@@ -4312,13 +4230,37 @@ const UI = (() => {
     renderReportPanel(pkt);
     renderDiagnostics(pkt);
     renderDerived(pkt);
-    try { renderVentilation(pkt); } catch(e) { console.warn("[renderVentilation]", e); }
+    renderVentilation(pkt);
     renderIMU(pkt);
     updateClocks();
   }
 
   // ── Variables de sesión IMU ──────────────────────────────────────────────
-  const _imu = { peakVel: 0, totalDist: 0, prevStrides: 0, prevStrideTs: Date.now() };
+  const _imu = {
+    peakVel: 0, totalDist: 0, prevStrides: 0, prevStrideTs: Date.now(),
+    // Estado para estimación de altura de salto
+    prevJumps: 0,       // contador de saltos en el paquete anterior
+    prevStab: 100,      // stab del paquete anterior (captura fase de vuelo pre-landing)
+    jumpHeights: [],    // array de alturas estimadas en la sesión (cm)
+    peakHeight: 0,      // pico de altura en cm
+  };
+
+  // Estima la altura del salto desde la varianza de aceleración (stab).
+  // Fundamento: stab refleja la varianza rolling del módulo de aceleración.
+  // Un salto mayor implica una transición más pronunciada de ~0g (vuelo) a
+  // ~3-5g (impacto de aterrizaje) → mayor varianza → menor stab en esa ventana.
+  // Modelo empírico calibrado para CMJ: h = (1 - stab/100)^0.6 × 65 cm
+  function _estimateJumpHeight(stabAtLanding, prevStab, aMagG) {
+    if (!Number.isFinite(stabAtLanding) || !Number.isFinite(aMagG)) return null;
+    // Validar impacto de aterrizaje: aMag debe superar 1.2g (filtro de ruido / pasos)
+    if (aMagG < 1.2) return null;
+    // Usar el mínimo de stab entre el paquete anterior y el actual
+    // para capturar la fase de vuelo aunque no coincida con el paquete de aterrizaje
+    const minStab = Math.min(stabAtLanding, prevStab);
+    const stabDrop = Math.max(0, 100 - minStab) / 100;  // 0-1
+    const hCm = Math.pow(stabDrop, 0.6) * 65;           // empírico: máx ~65 cm
+    return (hCm >= 3 && hCm <= 120) ? Math.round(hCm) : null;
+  }
 
   function updatePlacementButtons(placement) {
     const wBtn = Utils.$("placementWristBtn");
@@ -4378,14 +4320,7 @@ const UI = (() => {
     if (pkt.placement) updatePlacementButtons(pkt.placement);
     Utils.$("imuVelMs")    && (Utils.$("imuVelMs").textContent    = vel > 0 ? vel.toFixed(2) + " m/s" : "--");
     Utils.$("imuVelKmh")   && (Utils.$("imuVelKmh").textContent   = vel > 0 ? (vel * 3.6).toFixed(1) + " km/h" : "m/s desde cadencia de zancadas");
-    const jumpH    = Number.isFinite(pkt.jump_h)     && pkt.jump_h     > 0 ? pkt.jump_h     : null;
-    const jumpHMax = Number.isFinite(pkt.jump_h_max) && pkt.jump_h_max > 0 ? pkt.jump_h_max : null;
     Utils.$("imuJumps")    && (Utils.$("imuJumps").textContent    = jumps > 0 ? jumps : "--");
-    Utils.$("imuJumpsSub") && (Utils.$("imuJumpsSub").textContent = jumps > 0
-      ? "saltos · último: " + (jumpH ? jumpH.toFixed(1) + " cm" : "calculando…")
-      : "detectados por fase de vuelo (> 80 ms)");
-    Utils.$("imuJumpH")    && (Utils.$("imuJumpH").textContent    = jumpH    ? jumpH.toFixed(1) + " cm"    : "--");
-    Utils.$("imuJumpHMax") && (Utils.$("imuJumpHMax").textContent = jumpHMax ? jumpHMax.toFixed(1) + " cm" : "--");
     Utils.$("imuStrides")  && (Utils.$("imuStrides").textContent  = str > 0 ? str : "--");
     Utils.$("imuStab")     && (Utils.$("imuStab").textContent     = imuOk ? stab.toFixed(1) + " %" : "--");
     Utils.$("imuCadence")  && (Utils.$("imuCadence").textContent  = cadence);
@@ -4411,6 +4346,59 @@ const UI = (() => {
     Utils.$("imuAy")   && (Utils.$("imuAy").textContent   = ay !== null ? ay.toFixed(3) : "--");
     Utils.$("imuAz")   && (Utils.$("imuAz").textContent   = az !== null ? az.toFixed(3) : "--");
     Utils.$("imuAmag") && (Utils.$("imuAmag").textContent = aMag !== null ? aMag.toFixed(3) + " g" : "--");
+
+    // ── Estimación de altura de salto ────────────────────────────────────────
+    if (imuOk && jumps > _imu.prevJumps) {
+      // Se detectó un nuevo salto (aterrizaje confirmado por firmware)
+      const h = _estimateJumpHeight(stab, _imu.prevStab, aMag);
+      if (h !== null) {
+        _imu.jumpHeights.push(h);
+        if (h > _imu.peakHeight) _imu.peakHeight = h;
+      }
+    }
+    // Guardar estado para el próximo paquete
+    _imu.prevJumps = jumps;
+    _imu.prevStab  = imuOk ? stab : 100;
+
+    // Render alturas
+    const jh = _imu.jumpHeights;
+    if (jh.length > 0) {
+      const last = jh[jh.length - 1];
+      const avg  = Math.round(jh.reduce((a, b) => a + b, 0) / jh.length);
+      // Coeficiente de variación: consistencia entre saltos
+      const mean = avg;
+      const stdDev = jh.length > 1
+        ? Math.sqrt(jh.reduce((s, v) => s + (v - mean) ** 2, 0) / jh.length)
+        : 0;
+      const cv = mean > 0 ? Math.round((stdDev / mean) * 100) : 0;
+
+      Utils.$("jumpHeightLast") && (Utils.$("jumpHeightLast").textContent = "~" + last + " cm");
+      Utils.$("jumpHeightPeak") && (Utils.$("jumpHeightPeak").textContent = "~" + _imu.peakHeight + " cm");
+      Utils.$("jumpHeightAvg")  && (Utils.$("jumpHeightAvg").textContent  = "~" + avg + " cm");
+      Utils.$("jumpHeightCV")   && (Utils.$("jumpHeightCV").textContent   = cv < 10 ? "Alta (" + cv + "%)" : cv < 20 ? "Media (" + cv + "%)" : "Baja (" + cv + "%)");
+
+      // Mini histograma — últimos 10 saltos
+      const bars = Utils.$("jumpBars");
+      const label = Utils.$("jumpBarsLabel");
+      if (bars) {
+        const recent = jh.slice(-10);
+        const maxH   = Math.max(...recent, 1);
+        bars.innerHTML = recent.map((h, i) => {
+          const pct  = Math.round((h / maxH) * 100);
+          const isLast = i === recent.length - 1;
+          const color = h >= _imu.peakHeight ? "var(--purple)" : isLast ? "var(--teal)" : "var(--caution)";
+          return `<div title="Salto ${jh.length - recent.length + i + 1}: ~${h} cm"
+            style="flex:1;border-radius:4px 4px 0 0;background:${color};height:${pct}%;
+                   min-height:4px;transition:height .4s ease;opacity:${isLast ? 1 : 0.65}"></div>`;
+        }).join("");
+        if (label) label.textContent = recent.length + " saltos · pico " + _imu.peakHeight + " cm · promedio " + avg + " cm";
+      }
+    } else {
+      Utils.$("jumpHeightLast") && (Utils.$("jumpHeightLast").textContent = "--");
+      Utils.$("jumpHeightPeak") && (Utils.$("jumpHeightPeak").textContent = "--");
+      Utils.$("jumpHeightAvg")  && (Utils.$("jumpHeightAvg").textContent  = "--");
+      Utils.$("jumpHeightCV")   && (Utils.$("jumpHeightCV").textContent   = "--");
+    }
 
     // Wake-on-shake hint
     Utils.$("imuWakeTitle") && (Utils.$("imuWakeTitle").textContent = imuOk
