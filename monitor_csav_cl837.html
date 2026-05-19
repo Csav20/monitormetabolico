@@ -784,9 +784,33 @@ button, input, textarea { font: inherit; }
 
 .player-stats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
   margin-top: 18px;
+}
+
+.player-stat-vnt {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+.player-stat-vnt b {
+  font-family: var(--display);
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.player-stat-vnt span {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  opacity: 0.85;
+  line-height: 1.4;
+  text-align: right;
 }
 
 .player-stat {
@@ -1568,6 +1592,11 @@ button, input, textarea { font: inherit; }
             <div class="value mono" id="cardPiGrn" data-placeholder="--">--</div>
             <div class="sub" id="cardPiGrnSub">PI verde para perfusión cutánea y disipación.</div>
           </div>
+          <div class="metric-card">
+            <div class="label">Frec. respiratoria</div>
+            <div class="value mono" id="cardRR" data-placeholder="--">--</div>
+            <div class="sub" id="cardRRSub">resp/min · modulación PPG IR del MAX30102</div>
+          </div>
         </div>
       </article>
     </section>
@@ -1581,6 +1610,7 @@ button, input, textarea { font: inherit; }
       <a class="section-link" href="#clinica">Sesión</a>
       <a class="section-link" href="#hrv">HRV / SNA</a>
       <a class="section-link" href="#lactato">Lactato</a>
+      <a class="section-link" href="#ventilacion">Ventilación</a>
       <a class="section-link" href="#temperatura">Temperatura</a>
       <a class="section-link" href="#informe">Informe</a>
       <a class="section-link" href="#actividad" id="actividadNavLink" style="display:none">Actividad</a>
@@ -1606,6 +1636,10 @@ button, input, textarea { font: inherit; }
             <div class="player-meta" id="playerMetaLabel">TEAM · #01</div>
             <div class="player-badge" id="playerBadge">Esperando sesión útil</div>
             <div class="player-stats">
+              <div class="player-stat-vnt">
+                <b id="attrVNT">--</b>
+                <span>Ventilación<br>resp. / FC</span>
+              </div>
               <div class="player-stat"><b id="attrTHM">--</b><span>Termorregulación</span></div>
               <div class="player-stat"><b id="attrPLS">--</b><span>Pulso / FC</span></div>
               <div class="player-stat"><b id="attrO2">--</b><span>Oxigenación</span></div>
@@ -2168,6 +2202,84 @@ button, input, textarea { font: inherit; }
           <div class="mini-item"><div class="label">Sustrato dominante</div><div class="value mono" id="lacSustrato">--</div></div>
           <div class="mini-item"><div class="label">ATP relativo</div><div class="value mono" id="lacAtp">--</div></div>
           <div class="mini-item"><div class="label">PCr estimado</div><div class="value mono" id="lacPcr">--</div></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ══ UMBRALES VENTILATORIOS ══════════════════════════════════════════ -->
+    <section class="content-grid two-up" id="ventilacion">
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Frecuencia respiratoria</h2>
+            <p>Estimada desde la modulación de amplitud del pulso PPG (MAX30102 · 30 s)</p>
+          </div>
+          <span class="source-badge" id="rrSourceBadge" style="background:rgba(47,156,244,0.12);color:var(--caution)">PPG</span>
+        </div>
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="label">FR actual</div>
+            <div class="value mono" id="rrNow" data-placeholder="--">--</div>
+            <div class="sub" id="rrNowSub">resp / min</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Zona ventilatoria</div>
+            <div class="value mono" id="rrZone" data-placeholder="--">--</div>
+            <div class="sub" id="rrZoneSub">basada en FR absoluta</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Ratio FR / FC</div>
+            <div class="value mono" id="rrHrRatio" data-placeholder="--">--</div>
+            <div class="sub">eficiencia ventilatoria · ideal 0.12–0.18</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Muestra buffer</div>
+            <div class="value mono" id="rrBufPct" data-placeholder="--">--</div>
+            <div class="sub">% ventana 30 s completada</div>
+          </div>
+        </div>
+        <!-- Barra de zona ventilatoria -->
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:16px">
+          <div id="vzR" style="padding:6px 4px;border-radius:10px;text-align:center;font-size:0.66rem;font-weight:700;background:rgba(18,185,129,0.12);color:var(--safe)">Reposo<br>&lt;12</div>
+          <div id="vzL" style="padding:6px 4px;border-radius:10px;text-align:center;font-size:0.66rem;font-weight:700;background:rgba(18,185,129,0.08);color:var(--safe)">Ligero<br>12–20</div>
+          <div id="vzM" style="padding:6px 4px;border-radius:10px;text-align:center;font-size:0.66rem;font-weight:700;background:rgba(255,159,67,0.12);color:var(--alert)">Moderado<br>20–30</div>
+          <div id="vzVT1" style="padding:6px 4px;border-radius:10px;text-align:center;font-size:0.66rem;font-weight:700;background:rgba(255,111,77,0.12);color:var(--danger)">VT1<br>30–40</div>
+          <div id="vzVT2" style="padding:6px 4px;border-radius:10px;text-align:center;font-size:0.66rem;font-weight:700;background:rgba(242,72,91,0.12);color:var(--critical)">VT2<br>&gt;40</div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Umbrales ventilatorios</h2>
+            <p>VT1 y VT2 estimados desde la cinética FR + FC de la sesión actual</p>
+          </div>
+        </div>
+        <div class="stack-grid">
+          <div class="stack-item">
+            <div class="label">VT1 estimado</div>
+            <div class="value mono" id="vt1Hr">--</div>
+            <div class="sub" id="vt1Sub">BPM · umbral aeróbico · FR ~30 resp/min</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">VT2 estimado</div>
+            <div class="value mono" id="vt2Hr">--</div>
+            <div class="sub" id="vt2Sub">BPM · umbral anaeróbico · FR ~40 resp/min</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Zona actual</div>
+            <div class="value mono" id="vtZoneNow">--</div>
+            <div class="sub">relativa a VT1/VT2 del perfil</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">VE / FC sesión</div>
+            <div class="value mono" id="vtVeHr">--</div>
+            <div class="sub">ratio medio de la sesión</div>
+          </div>
+        </div>
+        <div class="coach-strip" style="margin-top:14px">
+          <strong id="vtCoachTitle">Esperando datos ventilatorios</strong>
+          <p id="vtCoachText">La FR se activa tras ~12 s de contacto continuo. Con datos de 30 s se estiman VT1 y VT2 relativos a tu perfil FC.</p>
         </div>
       </article>
     </section>
@@ -3174,6 +3286,9 @@ const BleManager = (() => {
     if (pkt.env_ok == null) pkt.env_ok = (pkt.hum ?? 0) > 0;
     if (pkt.ble_conn == null) pkt.ble_conn = connected;
     if (pkt.device == null) pkt.device = bleDevice?.name || "CSAV-01";
+    // Frecuencia respiratoria — nuevo campo desde firmware
+    if (pkt.rr == null) pkt.rr = 0;
+    if (pkt.rr_ok == null) pkt.rr_ok = false;
 
     return pkt;
   }
@@ -4073,6 +4188,7 @@ const UI = (() => {
     renderReportPanel(pkt);
     renderDiagnostics(pkt);
     renderDerived(pkt);
+    renderVentilation(pkt);
     renderIMU(pkt);
     updateClocks();
   }
@@ -4330,6 +4446,17 @@ const UI = (() => {
     Utils.$("cardPiGrnSub").textContent = Number.isFinite(view.grad) && view.grad < 5
       ? "Perfusión superficial importante porque el gradiente ya es bajo."
       : "Buena referencia de circulación cutánea superficial.";
+
+    const rrVal  = pkt.rr_ok && pkt.rr > 0 ? pkt.rr : null;
+    Utils.$("cardRR").textContent = rrVal ? Utils.fmt(rrVal, 1) + " resp/min" : "--";
+    Utils.$("cardRR").style.opacity = rrVal ? "" : "0.45";
+    Utils.$("cardRRSub").textContent = rrVal
+      ? (rrVal < 12 ? "Baja · reposo o hipoventilación"
+        : rrVal < 20 ? "Normal · actividad ligera-moderada"
+        : rrVal < 30 ? "Elevada · esfuerzo moderado-intenso"
+        : rrVal < 40 ? "Alta · umbral ventilatorio próximo"
+        : "Muy alta · esfuerzo máximo o artefacto")
+      : "Acumulando 12 s de señal para estimación …";
   }
 
   function renderTrendPanel(pkt) {
@@ -4641,9 +4768,11 @@ const UI = (() => {
     Utils.$("playerMetaLabel").textContent = [user.team, user.bib, user.category].filter(Boolean).join(" · ");
     Utils.$("playerBadge").textContent = snapshot.badge;
 
+    Utils.$("attrVNT").textContent = snapshot.attrs.VNT;
+    Utils.$("attrVNT").style.opacity = (snapshot.attrs.VNT === 72) ? "0.45" : "";
     Utils.$("attrTHM").textContent = snapshot.attrs.THM;
     Utils.$("attrPLS").textContent = snapshot.attrs.PLS;
-    Utils.$("attrO2").textContent = snapshot.attrs.O2;
+    Utils.$("attrO2").textContent  = snapshot.attrs.O2;
     Utils.$("attrREC").textContent = snapshot.attrs.REC;
     Utils.$("attrENV").textContent = snapshot.attrs.ENV;
     Utils.$("attrSIG").textContent = snapshot.attrs.SIG;
@@ -4654,19 +4783,35 @@ const UI = (() => {
     const averages = DataStore.getAverages();
     const riskKey = pkt?.risk?.key || "safe";
     const riskPenalty = { safe: 0, caution: 8, alert: 16, danger: 26, critical: 36 }[riskKey] || 0;
-    const skinView = pkt?.display?.tSkin;
-    const spo2View = pkt?.display?.spo2;
+    const skinView   = pkt?.display?.tSkin;
+    const spo2View   = pkt?.display?.spo2;
     const chargeView = pkt?.display?.charge;
     const signalScore = pkt?.contact_quality === "GOOD" ? 92 : pkt?.contact_quality === "WEAK" ? 66 : 38;
+
+    // VNT — eficiencia ventilatoria: ratio FR/FC (ideal ~0.12-0.18 en esfuerzo submáximo)
+    // Sin dato de FR disponible: score neutro 72
+    const rrVal = pkt?.rr_ok && pkt?.rr > 0 ? pkt.rr : null;
+    const hrAvg = Number.isFinite(averages.hr) && averages.hr > 0 ? averages.hr : null;
+    let VNT;
+    if (rrVal && hrAvg) {
+      const veHr = rrVal / hrAvg;  // ratio ventilatorio: bajo=eficiente, alto=fatiga
+      VNT = scoreTo99(96 - Math.max(0, (veHr - 0.14) * 280));
+    } else if (rrVal) {
+      VNT = scoreTo99(96 - Math.max(0, (rrVal - 16) * 2.2));
+    } else {
+      VNT = 72;
+    }
+
     const attrs = {
+      VNT,
       THM: scoreTo99(96 - riskPenalty - Math.max(0, ((skinView || 37) - 37.2) * 12)),
       PLS: scoreTo99(Number.isFinite(averages.hr) ? 88 - Math.max(0, (averages.hr - 145) * 0.35) : 72),
-      O2: scoreTo99(Number.isFinite(spo2View) ? spo2View : 82),
+      O2:  scoreTo99(Number.isFinite(spo2View) ? spo2View : 82),
       REC: scoreTo99(96 - Math.max(0, (chargeView || 0) * 0.65)),
       ENV: scoreTo99(96 - Math.max(0, ((pkt?.display?.humidex || 20) - 24) * 3.2)),
       SIG: scoreTo99(signalScore + (Number.isFinite(pkt?.display?.piGrn) ? Math.min(pkt.display.piGrn * 4, 10) : 0))
     };
-    const overall = Math.round(Object.values(attrs).reduce((sum, value) => sum + value, 0) / Object.values(attrs).length);
+    const overall = Math.round(Object.values(attrs).reduce((sum, v) => sum + v, 0) / Object.values(attrs).length);
 
     let badge = "Baseline lista";
     if (riskKey === "critical") badge = "Evento crítico";
@@ -4824,8 +4969,8 @@ ${_x}head>
       <div>${snapshot.user.sport}</div>
       <h2 style="margin-top:14px">${snapshot.user.name}</h2>
       <div style="margin-top:6px">${snapshot.user.team} · ${snapshot.user.bib}</div>
-      <div style="margin-top:16px;font-size:12px">Termo ${snapshot.scout.attrs.THM} · Pulso ${snapshot.scout.attrs.PLS} · O2 ${snapshot.scout.attrs.O2}</div>
-      <div style="margin-top:6px;font-size:12px">Recuper. ${snapshot.scout.attrs.REC} · Ambiente ${snapshot.scout.attrs.ENV} · Señal ${snapshot.scout.attrs.SIG}</div>
+      <div style="margin-top:16px;font-size:12px">Ventilación ${snapshot.scout.attrs.VNT} · Termo ${snapshot.scout.attrs.THM} · Pulso ${snapshot.scout.attrs.PLS}</div>
+      <div style="margin-top:6px;font-size:12px">O2 ${snapshot.scout.attrs.O2} · Recuper. ${snapshot.scout.attrs.REC} · Ambiente ${snapshot.scout.attrs.ENV} · Señal ${snapshot.scout.attrs.SIG}</div>
     </div>
     <div>
       <h1>CSAV Match Report</h1>
@@ -5241,6 +5386,64 @@ ${_x}html>`;
     });
   }
 
+  function renderVentilation(pkt) {
+    const rrVal = pkt?.rr_ok && pkt?.rr > 0 ? pkt.rr : null;
+    const hrVal = Number.isFinite(pkt?.display?.hr) && pkt.display.hr > 0 ? pkt.display.hr : null;
+    const user  = UserProfile.get();
+    const $     = Utils.$;
+
+    $("rrNow") && ($("rrNow").textContent  = rrVal ? Utils.fmt(rrVal, 1) + " resp/min" : "--");
+    $("rrNow") && ($("rrNow").style.opacity = rrVal ? "" : "0.4");
+
+    const vzIds = ["vzR","vzL","vzM","vzVT1","vzVT2"];
+    let activeVz = -1;
+    if (rrVal) activeVz = rrVal < 12 ? 0 : rrVal < 20 ? 1 : rrVal < 30 ? 2 : rrVal < 40 ? 3 : 4;
+    vzIds.forEach((id, i) => {
+      const el = $(id); if (!el) return;
+      el.style.transform = i === activeVz ? "translateY(-3px)" : "";
+      el.style.boxShadow = i === activeVz ? "0 6px 16px rgba(0,0,0,0.14)" : "";
+      el.style.filter    = (activeVz >= 0 && i !== activeVz) ? "opacity(0.38)" : "";
+    });
+    const zoneLabels = ["Reposo","Actividad ligera","Moderado","VT1 — Umbral aeróbico","VT2 — Umbral anaeróbico"];
+    const zoneSubs   = ["FR < 12","12–20 resp/min","20–30 resp/min","30–40 resp/min · vigila VT2","> 40 resp/min · máximo"];
+    $("rrZone")    && ($("rrZone").textContent    = rrVal ? zoneLabels[activeVz] : "--");
+    $("rrZoneSub") && ($("rrZoneSub").textContent = rrVal ? zoneSubs[activeVz] : "sin datos de FR");
+
+    const ratio = (rrVal && hrVal) ? rrVal / hrVal : null;
+    $("rrHrRatio") && ($("rrHrRatio").textContent = ratio ? ratio.toFixed(3) : "--");
+    $("rrHrRatio") && ($("rrHrRatio").style.color  = ratio ? (ratio < 0.12 ? "var(--safe)" : ratio < 0.20 ? "var(--caution)" : "var(--danger)") : "");
+    $("rrBufPct")  && ($("rrBufPct").textContent  = pkt?.rr_ok ? "100 %" : pkt?.contact ? "acumulando…" : "--");
+
+    // VT1 / VT2 estimados desde perfil (Beaver 1986, Wasserman 1994)
+    const hrRest  = user.hrRest || 58;
+    const hrMax   = user.hrMax  || 188;
+    const reserve = hrMax - hrRest;
+    const vt1Hr   = Math.round(hrRest + reserve * 0.60);
+    const vt2Hr   = Math.round(hrRest + reserve * 0.82);
+    $("vt1Hr")  && ($("vt1Hr").textContent  = vt1Hr + " BPM");
+    $("vt2Hr")  && ($("vt2Hr").textContent  = vt2Hr + " BPM");
+    $("vt1Sub") && ($("vt1Sub").textContent = "Rango VT1 · " + Math.round(reserve * 0.55 + hrRest) + "–" + Math.round(reserve * 0.65 + hrRest) + " BPM");
+    $("vt2Sub") && ($("vt2Sub").textContent = "Rango VT2 · " + Math.round(reserve * 0.78 + hrRest) + "–" + Math.round(reserve * 0.88 + hrRest) + " BPM");
+
+    let vtZone = "--";
+    if (hrVal) vtZone = hrVal < vt1Hr ? "Sub-VT1 · aeróbico" : hrVal < vt2Hr ? "VT1–VT2 · umbral" : "Sobre-VT2 · anaeróbico";
+    $("vtZoneNow") && ($("vtZoneNow").textContent = vtZone);
+
+    const avgHr = DataStore.getAverages().hr;
+    $("vtVeHr") && ($("vtVeHr").textContent = (rrVal && Number.isFinite(avgHr) && avgHr > 0) ? (rrVal / avgHr).toFixed(3) : "--");
+
+    const coachMap = [
+      ["Fase aeróbica — bajo estrés", "FR " + (rrVal ? Utils.fmt(rrVal,1) : "--") + " resp/min · metabolismo oxidativo dominante."],
+      ["Actividad ligera", "FR " + (rrVal ? Utils.fmt(rrVal,1) : "--") + " resp/min · rango normal de marcha activa."],
+      ["Zona de trabajo moderado", "FR " + (rrVal ? Utils.fmt(rrVal,1) : "--") + " resp/min · acercándose a VT1 (" + vt1Hr + " BPM)."],
+      ["Zona VT1 — umbral aeróbico", "FR " + (rrVal ? Utils.fmt(rrVal,1) : "--") + " resp/min · VT2 estimado en " + vt2Hr + " BPM."],
+      ["Zona VT2 — anaeróbico", "FR " + (rrVal ? Utils.fmt(rrVal,1) : "--") + " resp/min · lactato acumulándose. Reduce o recupera."]
+    ];
+    const coach = rrVal ? coachMap[activeVz] : ["Esperando datos ventilatorios", "La FR se activa tras ~12 s de contacto. Ajusta el sensor en tríceps."];
+    $("vtCoachTitle") && ($("vtCoachTitle").textContent = coach[0]);
+    $("vtCoachText")  && ($("vtCoachText").textContent  = coach[1]);
+  }
+
   return {
     init,
     render,
@@ -5253,6 +5456,7 @@ ${_x}html>`;
     renderCl837Activity,
     renderFromCl837,
     renderDerived,
+    renderVentilation,
     setPlacement,
     renderSessionHistory
   };
