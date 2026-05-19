@@ -1568,9 +1568,9 @@ button, input, textarea { font: inherit; }
             <div class="sub" id="cardHrSub">El promedio validado del firmware vive aquí.</div>
           </div>
           <div class="metric-card">
-            <div class="label">SpO₂ útil</div>
+            <div class="label">SpO₂ máx sesión</div>
             <div class="value mono" id="cardSpo2" data-placeholder="--">--</div>
-            <div class="sub" id="cardSpo2Sub">Prioriza dedo si `spo2_f` está disponible.</div>
+            <div class="sub" id="cardSpo2Sub">Valor más alto válido (94-100%) de la sesión</div>
           </div>
           <div class="metric-card">
             <div class="label">Carga térmica</div>
@@ -2976,6 +2976,7 @@ const DataStore = (() => {
       countHr: 0,
       sumSpo2: 0,
       countSpo2: 0,
+      maxSpo2: 0,      // máximo SpO2 válido de sesión (94-100%) — mostrado en el dashboard
       timeAbove385: 0,
       timeHighRisk: 0,
       packetCount: 0,
@@ -3156,6 +3157,9 @@ const DataStore = (() => {
     if (Number.isFinite(spo2Best)) {
       state.sumSpo2 += spo2Best;
       state.countSpo2 += 1;
+      // Solo actualizar máximo con lecturas fisiológicamente válidas (94-100%)
+      if (spo2Best >= 94 && spo2Best <= 100)
+        state.maxSpo2 = Math.max(state.maxSpo2, spo2Best);
     }
 
     if (Number.isFinite(grad)) state.minGrad = Math.min(state.minGrad, grad);
@@ -4459,9 +4463,26 @@ const UI = (() => {
     Utils.$("heroMessageTitle").textContent = risk.title;
     Utils.$("heroMessage").textContent = risk.text;
 
+    // Convierte el hex del riesgo a componentes RGB para rgba() dinámico
+    const _hx = risk.hex.replace("#","");
+    const _rr = parseInt(_hx.slice(0,2),16);
+    const _gg = parseInt(_hx.slice(2,4),16);
+    const _bb = parseInt(_hx.slice(4,6),16);
+
     document.querySelectorAll("[data-zone]").forEach(segment => {
-      segment.classList.toggle("active", segment.dataset.zone === tone);
-      segment.style.color = segment.dataset.zone === tone ? risk.hex : "";
+      const isActive = segment.dataset.zone === tone;
+      segment.classList.toggle("active", isActive);
+      if (isActive) {
+        segment.style.color       = risk.hex;
+        segment.style.background  = `rgba(${_rr},${_gg},${_bb},0.14)`;
+        segment.style.borderColor = `rgba(${_rr},${_gg},${_bb},0.4)`;
+        segment.style.boxShadow   = `0 4px 18px rgba(${_rr},${_gg},${_bb},0.18)`;
+      } else {
+        segment.style.color       = "";
+        segment.style.background  = "";
+        segment.style.borderColor = "";
+        segment.style.boxShadow   = "";
+      }
     });
 
     showNotice(tone, risk.title, risk.notice);
@@ -4541,8 +4562,13 @@ const UI = (() => {
     Utils.$("cardHr").style.fontStyle = hrCard.stale ? "italic" : "";
     Utils.$("cardHrSub").textContent = hrCard.sub;
 
-    Utils.$("cardSpo2").textContent = Number.isFinite(view.spo2) ? Utils.fmt(view.spo2, 1) + " %" : "--";
-    Utils.$("cardSpo2Sub").textContent = (pkt.stale?.spo2 ? "Último valor útil · " : "Fuente: ") + pkt.spo2_source;
+    // SpO2: mostrar el máximo válido (94-100%) registrado en la sesión.
+    // No se actualiza hacia abajo ni muestra lecturas de baja calidad.
+    const maxSpo2 = DataStore.getState().maxSpo2;
+    Utils.$("cardSpo2").textContent = maxSpo2 > 0 ? Utils.fmt(maxSpo2, 1) + " %" : "--";
+    Utils.$("cardSpo2Sub").textContent = maxSpo2 > 0
+      ? "Máx sesión · " + pkt.spo2_source
+      : "Sin lectura válida (94-100%) aún";
 
     Utils.$("cardCharge").textContent = Number.isFinite(view.charge) ? Utils.fmt(view.charge, 1) + " °C·s" : "--";
     Utils.$("cardChargeSub").textContent = view.charge >= 70
