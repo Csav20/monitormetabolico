@@ -3517,13 +3517,19 @@ const BleManager = (() => {
     UI.setConnectionState("disconnected");
   }
 
+  // writeValueWithResponse (Chrome 85+) reemplaza el deprecated writeValue()
+  function gattWrite(char, data) {
+    const fn = char.writeValueWithResponse || char.writeValueWithoutResponse || char.writeValue;
+    return fn.call(char, data);
+  }
+
   async function sendCommand(cmd) {
     if (!connected || !charFFE3) {
       UI.showCommandResponse('{"status":"ERROR","msg":"No conectado"}');
       return;
     }
     try {
-      await charFFE3.writeValue(new TextEncoder().encode(cmd));
+      await gattWrite(charFFE3, new TextEncoder().encode(cmd));
       UI.showCommandResponse("→ Comando enviado: " + cmd + " (esperando respuesta)");
     } catch (error) {
       UI.showCommandResponse('{"status":"ERROR","msg":"' + error.message + '"}');
@@ -3613,7 +3619,8 @@ const CL837Manager = (() => {
     try {
       const elapsed = Date.now() - _lastCommandSent;
       if (elapsed < 170) await _delay(170 - elapsed);
-      await _writeChar.writeValue(_hexToBytes(hexStr));
+      const fn = _writeChar.writeValueWithoutResponse || _writeChar.writeValueWithResponse || _writeChar.writeValue;
+      await fn.call(_writeChar, _hexToBytes(hexStr));
       _lastCommandSent = Date.now();
     } catch (_) {}
   }
@@ -3933,7 +3940,7 @@ const UI = (() => {
     if (initialized) return;
     initialized = true;
 
-    initCollapsiblePanels();
+    try { initCollapsiblePanels(); } catch(e) { console.warn("[panels]", e); }
     Utils.$("connectBtn").addEventListener("click", handleUnifiedConnectClick);
     Utils.$("demoBtn").addEventListener("click", toggleDemo);
     Utils.$("clearBtn").addEventListener("click", clearSession);
@@ -4305,7 +4312,7 @@ const UI = (() => {
     renderReportPanel(pkt);
     renderDiagnostics(pkt);
     renderDerived(pkt);
-    renderVentilation(pkt);
+    try { renderVentilation(pkt); } catch(e) { console.warn("[renderVentilation]", e); }
     renderIMU(pkt);
     updateClocks();
   }
