@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CSAV Monitor — CSAV-01 &amp; CL837</title>
+<title>CSAV Monitor — CSAV-01</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%23f4f7f7'/><circle cx='16' cy='16' r='7' fill='none' stroke='%23ff6f4d' stroke-width='2.4'/><circle cx='16' cy='16' r='2.5' fill='%23ff6f4d'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -1404,6 +1404,49 @@ button, input, textarea { font: inherit; }
 .source-badge.cl837 { background: rgba(107,99,255,0.12); color: var(--purple); }
 .source-badge.none { background: rgba(16,32,48,0.06); color: var(--ink-dim); }
 
+/* ── Tarjetas desplegables ──────────────────────────────────────────────── */
+.panel-head {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.panel-head > div:first-child { flex: 1; min-width: 0; }
+
+.panel-chevron {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(16, 32, 48, 0.06);
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  line-height: 1;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s;
+  transform: rotate(90deg);
+  color: var(--ink-soft);
+}
+.panel-head:hover .panel-chevron {
+  background: rgba(16, 32, 48, 0.11);
+}
+.panel.collapsed .panel-chevron {
+  transform: rotate(0deg);
+}
+
+.panel-body {
+  overflow: hidden;
+  transition: max-height 0.38s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s;
+  max-height: 6000px;
+  opacity: 1;
+}
+.panel.collapsed .panel-body {
+  max-height: 0;
+  opacity: 0;
+}
+
 /* ── Mobile / Bluefy (≤ 600 px) ─────────────────────────────────────────── */
 @media (max-width: 600px) {
   /* topbar: hide long subtitle, compact brand */
@@ -1450,8 +1493,8 @@ button, input, textarea { font: inherit; }
         <div class="brand-orbit"></div>
       </div>
       <div class="brand-copy">
-        <h1>CSAV Monitor — CSAV-01 &amp; CL837</h1>
-        <p>CSAV-01 (FFE1 JSON) · CL837 (Chileaf SDK) · Fusión de fuentes BLE</p>
+        <h1>CSAV Monitor — CSAV-01</h1>
+        <p>Monitor metabólico wearable · BLE</p>
       </div>
     </div>
 
@@ -2469,7 +2512,17 @@ button, input, textarea { font: inherit; }
           <div class="metric-card">
             <div class="label">Saltos sesión</div>
             <div class="value mono" id="imuJumps">--</div>
-            <div class="sub">detectados por fase de vuelo (&gt; 80 ms)</div>
+            <div class="sub" id="imuJumpsSub">detectados por fase de vuelo (&gt; 80 ms)</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Altura último salto</div>
+            <div class="value mono" id="imuJumpH">--</div>
+            <div class="sub">cm · h = g·t²/8 (tiempo de vuelo)</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Altura pico sesión</div>
+            <div class="value mono" id="imuJumpHMax">--</div>
+            <div class="sub">cm · mejor salto registrado</div>
           </div>
           <div class="metric-card">
             <div class="label">Zancadas / Pasos</div>
@@ -3813,10 +3866,74 @@ const UI = (() => {
   let lastPacket = null;
   let initialized = false;
 
+  // ── Sistema de tarjetas desplegables ────────────────────────────────────────
+  const PANEL_STATE_KEY = "csav_panel_states_v1";
+
+  function savePanelStates() {
+    const states = {};
+    document.querySelectorAll(".panel[data-pid]").forEach(p => {
+      states[p.dataset.pid] = p.classList.contains("collapsed");
+    });
+    try { localStorage.setItem(PANEL_STATE_KEY, JSON.stringify(states)); } catch(_) {}
+  }
+
+  function initCollapsiblePanels() {
+    let idx = 0;
+    // Paneles que arrancan colapsados por defecto (solo los secundarios/largos)
+    const defaultCollapsed = new Set([
+      "tendencias","graficos","clinica","hrv","lactato",
+      "ventilacion","temperatura","diagnostico","historial","informe"
+    ]);
+
+    document.querySelectorAll(".panel").forEach(panel => {
+      const head = panel.querySelector(".panel-head");
+      if (!head) return;
+
+      // ID basado en sección padre o índice secuencial
+      const section = panel.closest("section");
+      const pid = section?.id ? section.id + "_" + idx++ : "p" + idx++;
+      panel.dataset.pid = pid;
+
+      // Envolver contenido en panel-body (sin tocar el HTML estático)
+      const body = document.createElement("div");
+      body.className = "panel-body";
+      [...panel.children].filter(c => c !== head).forEach(c => body.appendChild(c));
+      panel.appendChild(body);
+
+      // Chevron
+      const chev = document.createElement("span");
+      chev.className = "panel-chevron";
+      chev.innerHTML = "›";
+      head.appendChild(chev);
+
+      // Toggle
+      head.addEventListener("click", e => {
+        if (e.target.closest("button,input,select,a,.action-btn")) return;
+        panel.classList.toggle("collapsed");
+        savePanelStates();
+      });
+
+      // Estado inicial por defecto
+      const sectionId = section?.id || "";
+      if (defaultCollapsed.has(sectionId)) panel.classList.add("collapsed");
+    });
+
+    // Restaurar estados guardados por el usuario (sobreescribe defaults)
+    try {
+      const saved = JSON.parse(localStorage.getItem(PANEL_STATE_KEY) || "{}");
+      document.querySelectorAll(".panel[data-pid]").forEach(p => {
+        if (p.dataset.pid in saved) {
+          p.classList.toggle("collapsed", saved[p.dataset.pid]);
+        }
+      });
+    } catch(_) {}
+  }
+
   function init() {
     if (initialized) return;
     initialized = true;
 
+    initCollapsiblePanels();
     Utils.$("connectBtn").addEventListener("click", handleUnifiedConnectClick);
     Utils.$("demoBtn").addEventListener("click", toggleDemo);
     Utils.$("clearBtn").addEventListener("click", clearSession);
@@ -4254,7 +4371,14 @@ const UI = (() => {
     if (pkt.placement) updatePlacementButtons(pkt.placement);
     Utils.$("imuVelMs")    && (Utils.$("imuVelMs").textContent    = vel > 0 ? vel.toFixed(2) + " m/s" : "--");
     Utils.$("imuVelKmh")   && (Utils.$("imuVelKmh").textContent   = vel > 0 ? (vel * 3.6).toFixed(1) + " km/h" : "m/s desde cadencia de zancadas");
+    const jumpH    = Number.isFinite(pkt.jump_h)     && pkt.jump_h     > 0 ? pkt.jump_h     : null;
+    const jumpHMax = Number.isFinite(pkt.jump_h_max) && pkt.jump_h_max > 0 ? pkt.jump_h_max : null;
     Utils.$("imuJumps")    && (Utils.$("imuJumps").textContent    = jumps > 0 ? jumps : "--");
+    Utils.$("imuJumpsSub") && (Utils.$("imuJumpsSub").textContent = jumps > 0
+      ? "saltos · último: " + (jumpH ? jumpH.toFixed(1) + " cm" : "calculando…")
+      : "detectados por fase de vuelo (> 80 ms)");
+    Utils.$("imuJumpH")    && (Utils.$("imuJumpH").textContent    = jumpH    ? jumpH.toFixed(1) + " cm"    : "--");
+    Utils.$("imuJumpHMax") && (Utils.$("imuJumpHMax").textContent = jumpHMax ? jumpHMax.toFixed(1) + " cm" : "--");
     Utils.$("imuStrides")  && (Utils.$("imuStrides").textContent  = str > 0 ? str : "--");
     Utils.$("imuStab")     && (Utils.$("imuStab").textContent     = imuOk ? stab.toFixed(1) + " %" : "--");
     Utils.$("imuCadence")  && (Utils.$("imuCadence").textContent  = cadence);
