@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CSAV-01 · JARVIS OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#020509;--p0:rgba(2,8,16,.98);--p1:rgba(0,16,30,.95);
+  --c:#00d8ff;--c2:#0099bb;--c3:rgba(0,216,255,.18);
+  --ch:#80eeff;--cd:#003344;
+  --r:#ff1a3a;--rh:#ff4060;--rd:rgba(255,26,58,.2);
+  --g:#ffc200;--gh:#ffe066;--gd:rgba(255,194,0,.15);
+  --gr:#00e676;--grd:rgba(0,230,118,.15);
+  --am:#ff9100;
+  --tx:#b0d8ec;--td:#1e4a60;--ts:#0a2030;
+  --bc:rgba(0,216,255,.22);--br:rgba(255,26,58,.22);
+  --bfont:'Share Tech Mono',monospace;
+  --hfont:'Orbitron',sans-serif;
+  --body:'Rajdhani',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg);color:var(--tx);font-family:var(--body);
+  font-size:13px;overflow-x:hidden;
+}
+/* hex grid bg */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    linear-gradient(rgba(0,216,255,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,216,255,.018) 1px,transparent 1px);
+  background-size:44px 44px;}
+/* scanline */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.1) 2px,rgba(0,0,0,.1) 3px);}
+
+/* ═══ LAYOUT ═══ */
+.jarvis{position:relative;z-index:1;min-height:100vh;display:grid;
+  grid-template-rows:auto 1fr auto auto;gap:0;}
+
+/* ═══ HEADER ═══ */
+header{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:6px 14px;
+  background:linear-gradient(180deg,rgba(0,30,50,.97),rgba(0,16,30,.97));
+  border-bottom:1px solid var(--c);
+  box-shadow:0 0 20px rgba(0,216,255,.12);
+  flex-wrap:wrap;gap:6px;
+}
+.hd-brand{display:flex;align-items:center;gap:10px}
+.hd-arc{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--c);
+  display:grid;place-items:center;box-shadow:0 0 10px rgba(0,216,255,.5),inset 0 0 8px rgba(0,216,255,.15);position:relative;}
+.hd-arc::before{content:'';width:20px;height:20px;border-radius:50%;border:1px solid var(--c);
+  box-shadow:0 0 8px var(--c);animation:aorb 2s ease-in-out infinite;}
+.hd-arc::after{content:'';position:absolute;width:8px;height:8px;border-radius:50%;background:var(--c);
+  box-shadow:0 0 6px var(--c);animation:aorb 2s ease-in-out infinite;}
+@keyframes aorb{0%,100%{opacity:.6;transform:scale(.88)}50%{opacity:1;transform:scale(1.12)}}
+.hd-title{font-family:var(--hfont);font-size:.9rem;font-weight:900;letter-spacing:4px;
+  background:linear-gradient(90deg,var(--c),var(--ch));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hd-sub{font-size:.58rem;letter-spacing:3px;color:var(--td);font-family:var(--bfont);}
+.hd-mid{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.hd-stat{text-align:center}
+.hd-stat .sl{font-family:var(--bfont);font-size:.55rem;letter-spacing:2px;color:var(--td);}
+.hd-stat .sv{font-family:var(--bfont);font-size:.82rem;color:var(--c);text-shadow:0 0 6px var(--c);}
+.hd-pills{display:flex;gap:4px;flex-wrap:wrap}
+.sp{font-family:var(--bfont);font-size:.58rem;letter-spacing:1px;padding:2px 7px;border-radius:1px;border:1px solid;transition:all .4s;}
+.sp.ok{color:var(--gr);border-color:rgba(0,230,118,.35)}
+.sp.fail{color:var(--td);border-color:rgba(30,74,96,.4)}
+.sp.warn{color:var(--am);border-color:rgba(255,145,0,.35)}
+.hd-time{font-family:var(--hfont);font-size:1.1rem;font-weight:700;letter-spacing:2px;
+  color:var(--c);text-shadow:0 0 8px var(--c);text-align:right}
+.hd-time .hd-date{font-size:.55rem;font-weight:400;letter-spacing:2px;color:var(--td);display:block;font-family:var(--bfont);}
+.chip{display:flex;align-items:center;gap:6px;padding:4px 12px;border:1px solid var(--bc);border-radius:1px;
+  font-family:var(--bfont);font-size:.68rem;letter-spacing:2px;color:var(--td);transition:all .3s;}
+.chip .dot{width:6px;height:6px;border-radius:50%;background:var(--td);}
+.chip[data-s=connected]{color:var(--c);border-color:rgba(0,216,255,.5);}
+.chip[data-s=connected] .dot{background:var(--c);box-shadow:0 0 6px var(--c);animation:blink 1.4s ease-in-out infinite;}
+.chip[data-s=connecting] .dot{background:var(--am);animation:blink .5s ease-in-out infinite;}
+.chip[data-s=standby]{color:var(--am);} .chip[data-s=standby] .dot{background:var(--am);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+.hd-btns{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.hb{font-family:var(--body);font-size:.68rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  padding:5px 12px;background:transparent;border:1px solid;border-radius:1px;cursor:pointer;transition:all .2s;}
+.hb.c{border-color:rgba(0,216,255,.45);color:var(--c)}.hb.c:hover{background:rgba(0,216,255,.07);box-shadow:0 0 10px rgba(0,216,255,.25)}
+.hb.r{border-color:rgba(255,26,58,.45);color:var(--r)}.hb.r:hover{background:rgba(255,26,58,.07)}
+.hb.g{border-color:rgba(255,194,0,.45);color:var(--g)}.hb.g:hover{background:rgba(255,194,0,.07)}
+.hb.gr{border-color:rgba(0,230,118,.4);color:var(--gr);display:none}
+.hb[disabled]{opacity:.28;cursor:default;pointer-events:none}
+
+/* ═══ MAIN CONTENT ═══ */
+.main{
+  display:grid;
+  grid-template-columns:220px 1fr 220px;
+  grid-template-rows:1fr;
+  gap:5px;padding:5px;
+}
+@media(max-width:1000px){.main{grid-template-columns:1fr 1fr;}
+  .col-center{grid-column:1/-1;order:-1;}}
+@media(max-width:600px){.main{grid-template-columns:1fr;}}
+
+/* ═══ COLUMNS ═══ */
+.col{display:flex;flex-direction:column;gap:5px;}
+
+/* ═══ PANEL ═══ */
+.win{
+  background:var(--p1);border:1px solid var(--bc);border-radius:2px;
+  position:relative;overflow:hidden;
+}
+.win::before,.win::after{content:'';position:absolute;width:10px;height:10px;pointer-events:none;z-index:2;}
+.win::before{top:0;left:0;border-top:1.5px solid var(--c);border-left:1.5px solid var(--c);}
+.win::after{bottom:0;right:0;border-bottom:1.5px solid var(--c);border-right:1.5px solid var(--c);}
+.win.r-frame{border-color:var(--br);}.win.r-frame::before,.win.r-frame::after{border-color:var(--r);}
+.win.g-frame{border-color:rgba(255,194,0,.25);}.win.g-frame::before,.win.g-frame::after{border-color:var(--g);}
+
+/* scan line anim */
+.win .scan{position:absolute;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,216,255,.25),transparent);
+  animation:sc 6s linear infinite;pointer-events:none;z-index:1;}
+@keyframes sc{0%{top:0;opacity:0}3%{opacity:1}97%{opacity:.2}100%{top:100%;opacity:0}}
+
+/* win title bar */
+.wt{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;
+  background:rgba(0,20,35,.8);border-bottom:1px solid var(--bc);cursor:pointer;user-select:none;}
+.wt-label{font-family:var(--bfont);font-size:.58rem;letter-spacing:2.5px;color:var(--td);text-transform:uppercase;
+  display:flex;align-items:center;gap:5px;}
+.wt-label .bar{width:2px;height:9px;background:var(--c);border-radius:1px;box-shadow:0 0 4px var(--c);}
+.wt-actions{display:flex;gap:4px;}
+.wt-btn{width:14px;height:14px;border-radius:50%;border:1px solid;cursor:pointer;background:transparent;
+  font-size:.5rem;display:grid;place-items:center;transition:all .2s;font-family:var(--bfont);color:transparent;}
+.wt-btn:hover{color:var(--bg)!important;}
+.wt-btn.exp{border-color:rgba(0,216,255,.4);color:transparent}.wt-btn.exp:hover{background:var(--c);color:var(--bg);}
+.wt-btn.col{border-color:rgba(255,194,0,.4)}.wt-btn.col:hover{background:var(--g);}
+.wb{padding:8px;}
+
+/* ═══ METRIC ATOMS ═══ */
+/* large value */
+.mv{font-family:var(--bfont);font-size:2rem;line-height:1;letter-spacing:1px;}
+.mv.c{color:var(--c);text-shadow:0 0 10px rgba(0,216,255,.6);}
+.mv.r{color:var(--r);text-shadow:0 0 10px rgba(255,26,58,.6);}
+.mv.g{color:var(--g);text-shadow:0 0 10px rgba(255,194,0,.5);}
+.mv.gr{color:var(--gr);}
+/* label */
+.ml{font-family:var(--bfont);font-size:.56rem;letter-spacing:2px;color:var(--td);text-transform:uppercase;}
+/* unit */
+.mu{font-family:var(--bfont);font-size:.6rem;color:var(--td);}
+/* value-grid */
+.vg{display:grid;gap:4px;}
+.vg2{grid-template-columns:1fr 1fr;}
+.vg3{grid-template-columns:1fr 1fr 1fr;}
+.vg4{grid-template-columns:1fr 1fr 1fr 1fr;}
+/* cell */
+.vc{background:rgba(0,216,255,.03);border:1px solid rgba(0,216,255,.1);border-radius:1px;padding:6px;text-align:center;}
+.vc.r-cell{background:rgba(255,26,58,.03);border-color:rgba(255,26,58,.12);}
+.vc.g-cell{background:rgba(255,194,0,.03);border-color:rgba(255,194,0,.12);}
+/* mini bar */
+.bar-track{height:3px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden;margin-top:4px;}
+.bar-fill{height:100%;border-radius:2px;transition:width .8s ease;}
+
+/* ═══ ARC REACTOR (center) ═══ */
+.col-center{display:flex;flex-direction:column;gap:5px;}
+.arc-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 8px;}
+.arc{position:relative;width:210px;height:210px;}
+.arc svg{width:100%;height:100%;overflow:visible;}
+.ar1{animation:rCW 40s linear infinite;transform-origin:105px 105px;}
+.ar2{animation:rCCW 18s linear infinite;transform-origin:105px 105px;}
+.ar3{animation:gloC 1.8s ease-in-out infinite;}
+@keyframes rCW{to{transform:rotate(360deg)}}
+@keyframes rCCW{to{transform:rotate(-360deg)}}
+@keyframes gloC{0%,100%{filter:drop-shadow(0 0 4px rgba(0,216,255,.5))}50%{filter:drop-shadow(0 0 14px rgba(0,216,255,1))}}
+@keyframes gloR{0%,100%{filter:drop-shadow(0 0 5px rgba(255,26,58,.7))}50%{filter:drop-shadow(0 0 16px rgba(255,26,58,1))}}
+
+/* zone bars */
+.zbars{display:flex;gap:2px;width:100%;max-width:220px;}
+.zb{flex:1;height:4px;border-radius:2px;opacity:.2;transition:all .4s;}
+.zb.on{opacity:1;box-shadow:0 0 5px currentColor;}
+
+/* quality badge */
+.qb{font-family:var(--bfont);font-size:.6rem;letter-spacing:2px;padding:3px 12px;
+  border:1px solid var(--bc);border-radius:1px;color:var(--td);transition:all .3s;text-align:center;}
+.qb[data-q=GOOD]{color:var(--gr);border-color:rgba(0,230,118,.4);}
+.qb[data-q=WEAK]{color:var(--am);border-color:rgba(255,145,0,.4);}
+
+/* ECG canvas */
+.ecg-wrap{width:100%;max-width:240px;height:40px;border:1px solid rgba(0,216,255,.15);
+  border-radius:1px;overflow:hidden;background:rgba(0,216,255,.02);}
+#ecgC{display:block;width:100%;height:100%}
+
+/* HR trend canvas */
+.hrt-wrap{width:100%;height:52px;border:1px solid rgba(255,26,58,.15);border-radius:1px;
+  overflow:hidden;background:rgba(255,26,58,.02);margin-top:4px;}
+#hrC{display:block;width:100%;height:100%}
+
+/* zone indicator */
+.zones{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;}
+.zi{padding:5px 3px;border:1px solid rgba(0,0,0,.3);border-radius:1px;text-align:center;opacity:.2;transition:all .3s;}
+.zi.on{opacity:1;box-shadow:0 0 7px currentColor;}
+.zi .zl{font-family:var(--bfont);font-size:.6rem;letter-spacing:1px;}
+.zi .zr{font-size:.5rem;color:var(--td);}
+
+/* ═══ SPARKLINE ═══ */
+.spark-c{display:block;width:100%;height:46px;border:1px solid rgba(0,216,255,.1);
+  border-radius:1px;background:rgba(0,0,0,.2);}
+
+/* ═══ THERMAL ═══ */
+.t-hero{font-family:var(--hfont);font-size:2.5rem;font-weight:700;
+  background:linear-gradient(135deg,var(--gh),var(--g));-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 6px rgba(255,194,0,.4));line-height:1;}
+.risk-fill{height:100%;border-radius:2px;transition:width .8s ease,background .8s ease;}
+
+/* ═══ MODAL (detail window) ═══ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:none;
+  align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.modal-overlay.on{display:flex;}
+.modal{background:rgba(2,14,26,.97);border:1px solid var(--c);border-radius:2px;
+  max-width:600px;width:94vw;max-height:90vh;overflow-y:auto;
+  box-shadow:0 0 30px rgba(0,216,255,.25);}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;
+  border-bottom:1px solid var(--bc);background:rgba(0,20,35,.8);}
+.modal-title{font-family:var(--bfont);font-size:.68rem;letter-spacing:3px;color:var(--c);text-transform:uppercase;}
+.modal-close{background:transparent;border:1px solid rgba(255,26,58,.5);color:var(--r);cursor:pointer;
+  width:22px;height:22px;border-radius:50%;font-size:.7rem;display:grid;place-items:center;}
+.modal-body{padding:14px;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.m-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;
+  border-bottom:1px solid rgba(0,216,255,.06);}
+.m-lbl{font-family:var(--bfont);font-size:.62rem;letter-spacing:1.5px;color:var(--td);}
+.m-val{font-family:var(--bfont);font-size:.85rem;color:var(--tx);}
+.m-val.c{color:var(--c);}.m-val.r{color:var(--r);}.m-val.g{color:var(--g);}
+
+/* ═══ BOTTOM STRIP ═══ */
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:5px;}
+@media(max-width:800px){.strip{grid-template-columns:1fr 1fr;}}
+.sw{background:var(--p1);border:1px solid var(--bc);border-radius:2px;padding:7px 9px;}
+.sw-lbl{font-family:var(--bfont);font-size:.55rem;letter-spacing:2px;color:var(--td);margin-bottom:4px;}
+.sw-val{font-family:var(--bfont);font-size:1.1rem;color:var(--c);text-shadow:0 0 6px var(--c);}
+.sw-sub{font-size:.58rem;color:var(--td);}
+
+/* ═══ FOOTER ═══ */
+footer{
+  padding:5px 14px;
+  background:rgba(0,10,20,.97);
+  border-top:1px solid rgba(0,216,255,.2);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;
+}
+.foot-brand{font-family:var(--hfont);font-size:.72rem;letter-spacing:5px;
+  background:linear-gradient(90deg,var(--c),rgba(0,216,255,.4));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.sess-sm{display:flex;gap:12px;flex-wrap:wrap;}
+.sm-item .sm-l{font-family:var(--bfont);font-size:.53rem;letter-spacing:1.5px;color:var(--td);}
+.sm-item .sm-v{font-family:var(--bfont);font-size:.8rem;color:var(--tx);}
+.foot-btns{display:flex;gap:5px;}
+
+/* ═══ NOTICE ═══ */
+.notice{padding:5px 14px;border-left:2px solid var(--c);background:rgba(0,216,255,.04);
+  font-size:.75rem;display:none;transition:all .3s;}
+.notice.on{display:block;}.notice-tag{font-family:var(--bfont);font-size:.6rem;letter-spacing:2px;color:var(--c);}
+.notice[data-t=danger]{border-color:var(--r);background:rgba(255,26,58,.04);}.notice[data-t=danger] .notice-tag{color:var(--r);}
+.notice[data-t=caution]{border-color:var(--am);}.notice[data-t=caution] .notice-tag{color:var(--am);}
+
+/* ═══ THERMAL BODY ═══ */
+.therm-wrap{display:flex;gap:8px;align-items:flex-start;margin-top:8px}
+#thermalBody path,#thermalBody ellipse,#thermalBody rect{
+  transition:fill 1.8s ease;fill:rgba(30,60,90,.4);stroke:rgba(0,0,0,.25);stroke-width:.4;
+}
+.therm-scale-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding-top:2px}
+.therm-scale-lbl{font-family:var(--bfont);font-size:.46rem;color:var(--td);letter-spacing:1px;text-align:center;margin:1px 0}
+.therm-zone-lbl{font-family:var(--bfont);font-size:.48rem;margin-top:5px;text-align:center;color:var(--td);letter-spacing:1px}
+.therm-zone-val{font-family:var(--bfont);font-size:.75rem;text-align:center}
+
+/* profile bar */
+.prof-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 14px;
+  background:rgba(0,10,18,.97);border-bottom:1px solid rgba(0,216,255,.1);font-size:.7rem;color:var(--td);}
+.prof-bar label{letter-spacing:1px;font-size:.6rem;display:flex;align-items:center;gap:5px;}
+.prof-bar input{background:rgba(0,216,255,.06);border:1px solid var(--bc);color:var(--c);
+  font-family:var(--bfont);font-size:.75rem;width:50px;padding:2px 6px;border-radius:1px;text-align:center;}
+.obla-disp{font-family:var(--bfont);font-size:.75rem;color:var(--am);margin-left:auto;}
+
+/* coll sections */
+.coll{background:var(--p1);border:1px solid var(--bc);border-radius:2px;margin:0 5px;}
+.coll-hd{padding:7px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--bfont);font-size:.6rem;letter-spacing:3px;color:var(--td);text-transform:uppercase;user-select:none;}
+.coll-hd:hover{color:var(--c);}
+.coll-bd{display:none;padding:8px 12px 10px;}
+.coll-bd.on{display:block;}
+.cmd-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px;}
+.cmd-btn{font-family:var(--bfont);font-size:.65rem;letter-spacing:1px;padding:3px 10px;
+  border:1px solid var(--bc);border-radius:1px;background:transparent;color:var(--c);cursor:pointer;}
+.cmd-btn:hover{background:rgba(0,216,255,.07);}
+.cmd-resp{font-family:var(--bfont);font-size:.68rem;color:var(--td);word-break:break-all;
+  padding:6px 8px;border:1px solid var(--bc);border-radius:1px;background:rgba(0,0,0,.3);}
+#histList{list-style:none;}
+#histList li{padding:4px 0;border-bottom:1px solid rgba(0,216,255,.06);
+  font-family:var(--bfont);font-size:.65rem;color:var(--td);}
+#histList li strong{color:var(--c);}
+</style>
+</head>
+<body>
+<div class="jarvis">
+
+<!-- ═══ HEADER ═══ -->
+<header>
+  <div class="hd-brand">
+    <div class="hd-arc"></div>
+    <div>
+      <div class="hd-title">CSAV-01</div>
+      <div class="hd-sub">JARVIS OS · METABOLIC MONITOR</div>
+    </div>
+  </div>
+  <div class="hd-mid">
+    <div class="hd-stat"><div class="sl">SESIÓN</div><div class="sv" id="hSess">00:00</div></div>
+    <div class="hd-stat"><div class="sl">FC ACTUAL</div><div class="sv" id="hHR">--</div></div>
+    <div class="hd-stat"><div class="sl">SpO₂</div><div class="sv" id="hSpo2">--</div></div>
+    <div class="hd-stat"><div class="sl">PIEL °C</div><div class="sv" id="hSkin">--</div></div>
+    <div class="hd-stat"><div class="sl">LACTATO</div><div class="sv" id="hLac">--</div></div>
+  </div>
+  <div class="hd-pills">
+    <span class="sp fail" id="pMax">MAX</span>
+    <span class="sp fail" id="pMlx">MLX</span>
+    <span class="sp fail" id="pBme">BME</span>
+    <span class="sp fail" id="pImu">IMU</span>
+  </div>
+  <div class="chip" id="chip" data-s="disconnected">
+    <span class="dot"></span><span id="chipTxt">OFFLINE</span>
+  </div>
+  <div class="hd-btns">
+    <button class="hb c" id="stbyBtn" disabled style="display:none">⏸</button>
+    <button class="hb gr" id="wakeBtn">▶ ON</button>
+    <button class="hb r" id="pwrBtn" disabled style="display:none">⏻</button>
+    <button class="hb g" id="connBtn">BLE CONNECT</button>
+  </div>
+  <div class="hd-time" id="clock">--:--<span class="hd-date" id="dateLbl"></span></div>
+</header>
+
+<!-- ░ NOTICE ░ -->
+<div class="notice" id="notice"><span class="notice-tag" id="nTag">INFO</span>&nbsp;<strong id="nTitle"></strong>&nbsp;<span id="nText"></span></div>
+
+<!-- ░ PROFILE ░ -->
+<div class="prof-bar">
+  <span>PERFIL:</span>
+  <label>FC MAX <input type="number" id="hrmax" value="185" min="120" max="220"></label>
+  <label>FC REP <input type="number" id="hrrest" value="60" min="30" max="100"></label>
+  <label>EDAD <input type="number" id="age" value="35" min="15" max="90"></label>
+  <span class="obla-disp" id="oblaD">OBLA: -- BPM</span>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <!-- ── LEFT COLUMN ── -->
+  <div class="col">
+
+    <!-- Cinética Térmica -->
+    <div class="win g-frame" id="win-thermal">
+      <div class="scan"></div>
+      <div class="wt" onclick="openModal('thermal')">
+        <span class="wt-label"><span class="bar"></span>CINÉTICA TÉRMICA</span>
+        <div class="wt-actions">
+          <button class="wt-btn exp" title="Ampliar">⊕</button>
+        </div>
+      </div>
+      <div class="wb">
+        <div class="t-hero" id="tSkin">--.-</div>
+        <div class="ml" style="margin-bottom:8px">°C · CUTÁNEA / MUÑECA</div>
+        <div class="vg vg2" style="margin-bottom:6px">
+          <div class="vc g-cell"><div class="ml">CORPORAL</div><div style="font-family:var(--bfont);font-size:1.1rem;color:var(--g)" id="tCore">--.-</div><div class="mu">°C est.</div></div>
+          <div class="vc"><div class="ml">AMBIENTE</div><div style="font-family:var(--bfont);font-size:1.1rem;color:var(--c)" id="tAmb">--.-</div><div class="mu">°C</div></div>
+        </div>
+        <div class="vg vg2" style="margin-bottom:6px">
+          <div class="vc"><div class="ml">HUMIDEX</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--c)" id="humidex">--</div></div>
+          <div class="vc"><div class="ml">ΔT PIEL/AMB</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--ch)" id="deltaT">-.-</div><div class="mu">°C</div></div>
+        </div>
+        <div class="ml" style="margin-bottom:3px">RIESGO TÉRMICO</div>
+        <div class="bar-track" style="height:5px"><div class="risk-fill" id="riskFill" style="width:5%;background:var(--td)"></div></div>
+        <div style="font-family:var(--bfont);font-size:.65rem;margin-top:3px;color:var(--td);letter-spacing:2px" id="riskTxt">ESPERANDO</div>
+        <!-- THERMAL BODY WIDGET -->
+        <div class="therm-wrap">
+          <!-- Human body SVG with temperature zones -->
+          <div style="flex:1;display:flex;justify-content:center">
+            <svg id="thermalBody" viewBox="0 0 80 222" xmlns="http://www.w3.org/2000/svg"
+                 style="width:66px;display:block">
+              <defs>
+                <filter id="bGlow" x="-15%" y="-15%" width="130%" height="130%">
+                  <feGaussianBlur stdDeviation="1.2" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <linearGradient id="tGrad" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0%"   stop-color="#0018ee"/>
+                  <stop offset="22%"  stop-color="#00b8ff"/>
+                  <stop offset="44%"  stop-color="#00e676"/>
+                  <stop offset="62%"  stop-color="#ffc200"/>
+                  <stop offset="78%"  stop-color="#ff6200"/>
+                  <stop offset="100%" stop-color="#ff1100"/>
+                </linearGradient>
+              </defs>
+              <!-- HEAD -->
+              <ellipse id="thz_head" cx="40" cy="14" rx="13" ry="13.5" filter="url(#bGlow)"/>
+              <!-- NECK -->
+              <path id="thz_neck" d="M36,26 L44,26 L43,34 L37,34 Z"/>
+              <!-- TORSO -->
+              <path id="thz_torso" d="M20,34 C15,52 15,82 18,98 C21,106 32,109 40,109 C48,109 59,106 62,98 C65,82 65,52 60,34 Z" filter="url(#bGlow)"/>
+              <!-- LEFT UPPER ARM -->
+              <path id="thz_luarm" d="M20,42 C12,46 6,62 6,80 L15,81 C16,66 20,53 26,48 Z"/>
+              <!-- RIGHT UPPER ARM -->
+              <path id="thz_ruarm" d="M60,42 C68,46 74,62 74,80 L65,81 C64,66 60,53 54,48 Z"/>
+              <!-- LEFT FOREARM -->
+              <path id="thz_lfarm" d="M6,82 C3,96 2,110 3,120 L12,120 C11,110 11,97 15,83 Z"/>
+              <!-- RIGHT FOREARM -->
+              <path id="thz_rfarm" d="M74,82 C77,96 78,110 77,120 L68,120 C69,110 69,97 65,83 Z"/>
+              <!-- LEFT HAND -->
+              <ellipse id="thz_lhand" cx="7.5" cy="126" rx="5" ry="7" filter="url(#bGlow)"/>
+              <!-- RIGHT HAND -->
+              <ellipse id="thz_rhand" cx="72.5" cy="126" rx="5" ry="7" filter="url(#bGlow)"/>
+              <!-- LEFT UPPER LEG -->
+              <path id="thz_lulg" d="M24,109 C18,132 18,154 19,170 L31,170 C32,154 34,132 38,110 Z"/>
+              <!-- RIGHT UPPER LEG -->
+              <path id="thz_rulg" d="M56,110 C42,132 42,154 41,170 L53,170 C54,154 52,132 56,109 Z"/>
+              <!-- LEFT LOWER LEG -->
+              <path id="thz_lllg" d="M19,172 C16,188 16,202 17,212 L29,212 C30,202 30,188 31,172 Z"/>
+              <!-- RIGHT LOWER LEG -->
+              <path id="thz_rllg" d="M41,172 C42,188 42,202 43,212 L55,212 C56,202 56,188 53,172 Z"/>
+              <!-- LEFT FOOT -->
+              <path id="thz_lfoot" d="M15,212 C11,217 14,220 22,220 C30,220 31,216 29,212 Z" filter="url(#bGlow)"/>
+              <!-- RIGHT FOOT -->
+              <path id="thz_rfoot" d="M43,212 C41,216 42,220 50,220 C58,220 61,217 57,212 Z" filter="url(#bGlow)"/>
+            </svg>
+          </div>
+
+          <!-- Temperature scale + zone labels -->
+          <div class="therm-scale-wrap">
+            <div class="therm-scale-lbl">HOT</div>
+            <svg viewBox="0 0 14 110" style="width:14px;height:90px">
+              <rect x="3" y="0" width="8" height="110" rx="3" fill="url(#tGrad)"/>
+              <!-- tick lines -->
+              <g stroke="rgba(255,255,255,.3)" stroke-width=".6">
+                <line x1="11" y1="0"  x2="14" y2="0"/>
+                <line x1="11" y1="22" x2="14" y2="22"/>
+                <line x1="11" y1="44" x2="14" y2="44"/>
+                <line x1="11" y1="66" x2="14" y2="66"/>
+                <line x1="11" y1="88" x2="14" y2="88"/>
+                <line x1="11" y1="110" x2="14" y2="110"/>
+              </g>
+            </svg>
+            <div class="therm-scale-lbl">COLD</div>
+            <div class="therm-zone-lbl">ZONA</div>
+            <div class="therm-zone-val" id="thzLabel" style="color:var(--td)">--</div>
+            <div class="therm-zone-lbl" style="margin-top:4px">CORE</div>
+            <div class="therm-zone-val" id="thzCore" style="color:var(--g)">--.-</div>
+            <div class="therm-scale-lbl">°C</div>
+            <div class="therm-zone-lbl" style="margin-top:4px">EXTREM</div>
+            <div class="therm-zone-val" id="thzExtrem" style="color:var(--c)">--.-</div>
+            <div class="therm-scale-lbl">°C</div>
+          </div>
+        </div>
+
+        <!-- Sparkline trend (kept compact below body) -->
+        <div class="ml" style="margin-top:8px;margin-bottom:3px">TENDENCIA PIEL / AMB</div>
+        <canvas class="spark-c" id="sparkC"></canvas>
+        <div style="display:flex;justify-content:space-between;margin-top:2px;font-size:.52rem;color:var(--td);font-family:var(--bfont)">
+          <span style="color:var(--g)">── Piel</span><span>── Amb</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Atmosphere -->
+    <div class="win" id="win-atm">
+      <div class="scan"></div>
+      <div class="wt" onclick="openModal('atm')">
+        <span class="wt-label"><span class="bar"></span>ATMOSPHERE</span>
+        <button class="wt-btn exp" title="Ampliar">⊕</button>
+      </div>
+      <div class="wb">
+        <div class="vg vg3" style="margin-bottom:5px">
+          <div class="vc"><div class="ml">HUM</div><div class="mv c" style="font-size:1.3rem" id="hum">--</div><div class="mu">%</div></div>
+          <div class="vc"><div class="ml">PRES</div><div class="mv c" style="font-size:1.1rem" id="pres">---</div><div class="mu">hPa</div></div>
+          <div class="vc"><div class="ml">SWEAT</div><div class="mv c" style="font-size:1.1rem" id="sweat">--</div><div class="mu">idx</div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 7px;
+          border:1px solid rgba(0,216,255,.1);border-radius:1px;background:rgba(0,216,255,.02);">
+          <span class="ml">VOC AIRE</span>
+          <span style="font-family:var(--bfont);font-size:.78rem;color:var(--gr)" id="gas">--- kΩ</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Motion -->
+    <div class="win" id="win-mot">
+      <div class="scan"></div>
+      <div class="wt" onclick="openModal('mot')">
+        <span class="wt-label"><span class="bar"></span>KINETICS · GY-91</span>
+        <button class="wt-btn exp" title="Ampliar">⊕</button>
+      </div>
+      <div class="wb">
+        <div class="vg vg2" style="margin-bottom:5px">
+          <div class="vc"><div class="ml">VELOCIDAD</div><div class="mv c" style="font-size:1.3rem" id="vel">-.-</div><div class="mu" id="velK">m/s</div></div>
+          <div class="vc r-cell"><div class="ml">SALTOS</div><div class="mv r" style="font-size:1.5rem" id="jumps">--</div></div>
+        </div>
+        <div class="vg vg3" style="margin-bottom:5px">
+          <div class="vc"><div class="ml">PASOS</div><div class="mv c" style="font-size:1.1rem" id="strides">--</div></div>
+          <div class="vc"><div class="ml">CADENCIA</div><div class="mv c" style="font-size:1.1rem" id="cad">--</div><div class="mu">p/min</div></div>
+          <div class="vc"><div class="ml">DIST</div><div class="mv c" style="font-size:1.1rem" id="distV">--</div></div>
+        </div>
+        <div class="ml" style="margin-bottom:3px">ESTABILIZACIÓN <span style="color:var(--c)" id="stabPct">--</span>%</div>
+        <div class="bar-track"><div id="stabF" style="width:100%;background:var(--gr)" class="bar-fill"></div></div>
+        <div style="margin-top:7px;font-size:.58rem;letter-spacing:2px;color:var(--td);font-family:var(--bfont)">POSICIÓN SENSOR</div>
+        <div style="display:flex;border:1px solid var(--bc);border-radius:1px;overflow:hidden;margin-top:4px;">
+          <button class="pl-btn" id="plW" onclick="setPlacement('wrist')" style="flex:1;padding:4px;font-family:var(--bfont);font-size:.6rem;letter-spacing:1px;cursor:pointer;border:none;background:rgba(0,216,255,.14);color:var(--c);">MUÑECA</button>
+          <button class="pl-btn" id="plC" onclick="setPlacement('chest')" style="flex:1;padding:4px;font-family:var(--bfont);font-size:.6rem;letter-spacing:1px;cursor:pointer;border:none;background:transparent;color:var(--td);">PECHO</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /left -->
+
+  <!-- ── CENTER COLUMN ── -->
+  <div class="col-center col">
+
+    <!-- Vitals arc -->
+    <div class="win cyan-frame" style="border-color:var(--bc)">
+      <div class="scan"></div>
+      <div class="wt"><span class="wt-label"><span class="bar"></span>CARDIAC · OXIMETRY · FC REALTIME</span></div>
+      <div class="arc-wrap">
+        <!-- Arc Reactor SVG -->
+        <div class="arc">
+          <svg viewBox="0 0 210 210" xmlns="http://www.w3.org/2000/svg">
+            <circle class="ar1" cx="105" cy="105" r="100" fill="none" stroke="rgba(0,216,255,.1)" stroke-width="1" stroke-dasharray="4 8"/>
+            <circle class="ar2" cx="105" cy="105" r="88" fill="none" stroke="rgba(0,216,255,.2)" stroke-width="1.5" stroke-dasharray="14 6"/>
+            <!-- tick marks -->
+            <g stroke="rgba(0,216,255,.3)" stroke-width="1">
+              <line x1="105" y1="17" x2="105" y2="26"/><line x1="105" y1="184" x2="105" y2="193"/>
+              <line x1="17" y1="105" x2="26" y2="105"/><line x1="184" y1="105" x2="193" y2="105"/>
+              <line x1="40" y1="40" x2="47" y2="47"/><line x1="163" y1="163" x2="170" y2="170"/>
+              <line x1="170" y1="40" x2="163" y2="47"/><line x1="40" y1="170" x2="47" y2="163"/>
+            </g>
+            <circle id="hrRing" class="ar3" cx="105" cy="105" r="75" fill="none" stroke="var(--c)" stroke-width="3"/>
+            <circle cx="105" cy="105" r="60" fill="rgba(2,8,16,.97)" stroke="rgba(0,216,255,.35)" stroke-width="1.5"/>
+            <!-- inner decorative rings -->
+            <circle cx="105" cy="105" r="48" fill="none" stroke="rgba(0,216,255,.15)" stroke-width=".8" stroke-dasharray="6 3"/>
+            <circle cx="105" cy="105" r="36" fill="rgba(0,30,48,.5)" stroke="rgba(0,216,255,.25)" stroke-width="1"/>
+            <!-- HR value -->
+            <text id="aHR" x="105" y="96" text-anchor="middle" fill="#ffc200" font-family="'Orbitron',sans-serif" font-size="42" font-weight="900">--</text>
+            <text x="105" y="112" text-anchor="middle" fill="rgba(0,216,255,.65)" font-family="'Share Tech Mono',monospace" font-size="9" letter-spacing="4">BPM</text>
+            <text x="105" y="130" text-anchor="middle" fill="rgba(0,216,255,.5)" font-family="'Share Tech Mono',monospace" font-size="8" letter-spacing="2">SpO₂</text>
+            <text id="aSpo2" x="105" y="145" text-anchor="middle" fill="var(--c)" font-family="'Share Tech Mono',monospace" font-size="18">--.-%</text>
+          </svg>
+        </div>
+        <div class="qb" id="qb" data-q="NONE">SIN CONTACTO</div>
+        <div class="zbars">
+          <div class="zb on" id="zb1" style="background:#4fc3f7;color:#4fc3f7"></div>
+          <div class="zb" id="zb2" style="background:#00e676;color:#00e676"></div>
+          <div class="zb" id="zb3" style="background:#ffc200;color:#ffc200"></div>
+          <div class="zb" id="zb4" style="background:#ff9100;color:#ff9100"></div>
+          <div class="zb" id="zb5" style="background:#ff1a3a;color:#ff1a3a"></div>
+        </div>
+        <div class="ecg-wrap"><canvas id="ecgC"></canvas></div>
+        <div class="hrt-wrap"><canvas id="hrC"></canvas></div>
+        <div class="vg vg4" style="width:100%;max-width:260px">
+          <div class="vc r-cell"><div class="ml">RRI</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--r)" id="rri">---</div><div class="mu">ms</div></div>
+          <div class="vc g-cell"><div class="ml">FC MED</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--g)" id="hrAvg">--</div></div>
+          <div class="vc r-cell"><div class="ml">FC PICO</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--r)" id="hrPeak">--</div></div>
+          <div class="vc"><div class="ml">PI%</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--c)" id="pi">-.-</div></div>
+        </div>
+        <!-- Zones -->
+        <div class="zones" style="width:100%;max-width:260px">
+          <div class="zi" id="zi1" style="color:#4fc3f7;border-color:rgba(79,195,247,.35);background:rgba(79,195,247,.05)"><div class="zl">Z1</div><div class="zr">&lt;60%</div></div>
+          <div class="zi" id="zi2" style="color:#00e676;border-color:rgba(0,230,118,.35);background:rgba(0,230,118,.05)"><div class="zl">Z2</div><div class="zr">60-70</div></div>
+          <div class="zi" id="zi3" style="color:#ffc200;border-color:rgba(255,194,0,.35);background:rgba(255,194,0,.05)"><div class="zl">Z3</div><div class="zr">70-80</div></div>
+          <div class="zi" id="zi4" style="color:#ff9100;border-color:rgba(255,145,0,.35);background:rgba(255,145,0,.05)"><div class="zl">Z4</div><div class="zr">80-90</div></div>
+          <div class="zi" id="zi5" style="color:#ff1a3a;border-color:rgba(255,26,58,.35);background:rgba(255,26,58,.05)"><div class="zl">Z5</div><div class="zr">&gt;90%</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /center -->
+
+  <!-- ── RIGHT COLUMN ── -->
+  <div class="col">
+
+    <!-- Lactate -->
+    <div class="win r-frame" id="win-lac">
+      <div class="scan" style="background:linear-gradient(90deg,transparent,rgba(255,26,58,.2),transparent)"></div>
+      <div class="wt" onclick="openModal('lac')">
+        <span class="wt-label"><span class="bar" style="background:var(--r);box-shadow:0 0 4px var(--r)"></span>LACTATO · BEAVER/HECK</span>
+        <button class="wt-btn exp" title="Ampliar">⊕</button>
+      </div>
+      <div class="wb">
+        <div style="font-family:var(--hfont);font-size:2.2rem;font-weight:700;
+          background:linear-gradient(135deg,var(--r),var(--am));-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+          filter:drop-shadow(0 0 6px rgba(255,26,58,.4));line-height:1" id="lacVal">-.--</div>
+        <div class="ml" style="margin-bottom:5px">mmol/L ESTIMADO</div>
+        <div style="font-family:var(--bfont);font-size:.6rem;letter-spacing:2px;padding:3px 8px;border:1px solid;border-radius:1px;display:inline-block;margin-bottom:8px;color:var(--gr);border-color:rgba(0,230,118,.4)" id="lacPhase">FASE I · AERÓBICA</div>
+        <div class="vg vg2" style="margin-bottom:5px">
+          <div class="vc r-cell"><div class="ml">d[Lac]/dt</div><div style="font-family:var(--bfont);font-size:.9rem;color:var(--am)" id="dlac">+0.00</div><div class="mu">mmol/L·min⁻¹</div></div>
+          <div class="vc r-cell"><div class="ml">pH MUSC</div><div style="font-family:var(--bfont);font-size:.9rem;color:var(--tx)" id="ph">7.41</div><div class="mu">7.45−Lac×0.04</div></div>
+        </div>
+        <div class="vg vg2" style="margin-bottom:5px">
+          <div class="vc"><div class="ml">OBLA HR</div><div style="font-family:var(--bfont);font-size:.9rem;color:var(--am)" id="oblaHR">---</div><div class="mu">BPM Sjodin'81</div></div>
+          <div class="vc"><div class="ml">%HRR</div><div style="font-family:var(--bfont);font-size:.9rem;color:var(--c)" id="phrr">--</div><div class="mu">%</div></div>
+        </div>
+        <!-- phase bar -->
+        <div class="ml" style="margin-bottom:3px">FASES I · II · III</div>
+        <div style="display:flex;gap:3px;height:5px;border-radius:2px;overflow:hidden">
+          <div id="ob1" style="flex:1;border-radius:2px;background:var(--gr);opacity:.2;transition:opacity .4s"></div>
+          <div id="ob2" style="flex:1;border-radius:2px;background:var(--gr);opacity:.2;transition:opacity .4s"></div>
+          <div id="ob3" style="flex:1;border-radius:2px;background:var(--am);opacity:.2;transition:opacity .4s"></div>
+          <div id="ob4" style="flex:1;border-radius:2px;background:var(--am);opacity:.2;transition:opacity .4s"></div>
+          <div id="ob5" style="flex:1;border-radius:2px;background:var(--r);opacity:.2;transition:opacity .4s"></div>
+          <div id="ob6" style="flex:1;border-radius:2px;background:var(--r);opacity:.2;transition:opacity .4s"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metabolic -->
+    <div class="win" id="win-meta">
+      <div class="scan"></div>
+      <div class="wt" onclick="openModal('meta')">
+        <span class="wt-label"><span class="bar"></span>ESTADO METABÓLICO</span>
+        <button class="wt-btn exp" title="Ampliar">⊕</button>
+      </div>
+      <div class="wb">
+        <div class="vg vg2" style="margin-bottom:5px">
+          <div class="vc"><div class="ml">BUFFER</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--c)" id="mBuf">--.-</div><div class="mu">mmol/L</div><div class="bar-track"><div id="mBufBar" class="bar-fill" style="background:var(--c)"></div></div></div>
+          <div class="vc r-cell"><div class="ml">TOLERANCIA</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--gr)" id="mTol">Alta</div><div class="mu" id="mTolS">Fase I</div></div>
+          <div class="vc g-cell"><div class="ml">GLUCOSA</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--g)" id="mGluc">--</div><div class="mu">mg/dL</div></div>
+          <div class="vc"><div class="ml">REC IDX</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--ch)" id="mRec">0.00</div><div class="mu">(FC-rep)/rep</div></div>
+        </div>
+        <div class="vg vg2" style="margin-bottom:5px">
+          <div class="vc"><div class="ml">RER</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--c)" id="mRer">0.--</div><div class="mu" id="mSub">--</div></div>
+          <div class="vc g-cell"><div class="ml">ATP REL</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--g)" id="mAtp">-.-</div><div class="bar-track"><div id="mAtpBar" class="bar-fill" style="background:var(--g)"></div></div></div>
+          <div class="vc"><div class="ml">PCr %</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--ch)" id="mPcr">--</div><div class="bar-track"><div id="mPcrBar" class="bar-fill" style="background:var(--c)"></div></div></div>
+          <div class="vc"><div class="ml">VO₂ REL</div><div style="font-family:var(--bfont);font-size:.9rem;color:var(--c)" id="mVo2">--.-</div><div class="mu">ml/kg·min</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HRV -->
+    <div class="win" id="win-hrv">
+      <div class="scan"></div>
+      <div class="wt" onclick="openModal('hrv')">
+        <span class="wt-label"><span class="bar"></span>HRV · ESTRÉS · CARGA</span>
+        <button class="wt-btn exp" title="Ampliar">⊕</button>
+      </div>
+      <div class="wb">
+        <div class="vg vg3" style="margin-bottom:5px">
+          <div class="vc"><div class="ml">SDNN</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--c)" id="hSdnn">--</div><div class="mu">ms</div></div>
+          <div class="vc r-cell"><div class="ml">RMSSD</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--r)" id="hRmssd">--</div><div class="mu">ms</div></div>
+          <div class="vc"><div class="ml">ESTRÉS</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--am)" id="hStress">--</div><div class="mu">1-10</div></div>
+        </div>
+        <div class="vg vg3">
+          <div class="vc g-cell"><div class="ml">CARGA</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--g)" id="tLoad">0.0</div><div class="mu">TSS</div></div>
+          <div class="vc"><div class="ml">RESP</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--c)" id="hBreath">--</div><div class="mu">resp/min</div></div>
+          <div class="vc"><div class="ml">VEL PICO</div><div style="font-family:var(--bfont);font-size:1rem;color:var(--c)" id="vPeak">--</div><div class="mu">km/h</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /right -->
+</div><!-- /main -->
+
+<!-- ═══ BOTTOM STRIP ═══ -->
+<div class="strip">
+  <div class="sw"><div class="sw-lbl">FC MEDIA SESIÓN</div><div class="sw-val" id="sHr">-- bpm</div></div>
+  <div class="sw"><div class="sw-lbl">PIEL MEDIA / PICO</div><div class="sw-val" id="sSkin">-- / -- °C</div></div>
+  <div class="sw"><div class="sw-lbl">SpO₂ MEDIA</div><div class="sw-val" id="sSpo2">-- %</div></div>
+  <div class="sw"><div class="sw-lbl">PASOS / DIST</div><div class="sw-val" id="sMot">-- / -- m</div></div>
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="foot-brand">STARK INDUSTRIES · CSAV-01</div>
+  <div class="sess-sm">
+    <div class="sm-item"><div class="sm-l">SESIÓN</div><div class="sm-v" id="fTimer">00:00</div></div>
+    <div class="sm-item"><div class="sm-l">UPTIME</div><div class="sm-v" id="fUptime">--</div></div>
+    <div class="sm-item"><div class="sm-l">PAQUETES</div><div class="sm-v" id="fPkts">0</div></div>
+  </div>
+  <div class="foot-btns">
+    <button class="hb c" id="newSessBtn">↺ RESET SESIÓN</button>
+    <button class="hb g" id="expBtn">⬇ EXPORTAR</button>
+    <button class="hb c" onclick="tog('hist')" style="font-size:.6rem">HISTORIAL</button>
+    <button class="hb c" onclick="tog('diag')" style="font-size:.6rem">DIAGNÓSTICO</button>
+  </div>
+</footer>
+
+<!-- ═══ COLLAPSIBLES ═══ -->
+<div class="coll">
+  <div class="coll-hd" onclick="tog('hist')"><span>◈ HISTORIAL DE SESIONES</span><span id="histChev">▼</span></div>
+  <div class="coll-bd" id="histBd"><ul id="histList"><li>Sin sesiones guardadas.</li></ul>
+    <button class="cmd-btn" style="margin-top:6px" onclick="if(confirm('¿Borrar historial?')){localStorage.removeItem('csav_s');renderHist();}">BORRAR</button>
+  </div>
+</div>
+<div class="coll" style="margin-bottom:5px">
+  <div class="coll-hd" onclick="tog('diag')"><span>◈ DIAGNÓSTICO BLE</span><span id="diagChev">▼</span></div>
+  <div class="coll-bd" id="diagBd">
+    <div class="cmd-row">
+      <button class="cmd-btn" onclick="BLE.send('PING')">PING</button>
+      <button class="cmd-btn" onclick="BLE.send('STATUS')">STATUS</button>
+      <button class="cmd-btn" onclick="BLE.send('I2C_SCAN')">I2C SCAN</button>
+      <button class="cmd-btn" onclick="BLE.send('RESET')">RESET FW</button>
+    </div>
+    <div class="cmd-resp" id="cmdResp">Sin respuesta.</div>
+  </div>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalBox">
+    <div class="modal-hd">
+      <span class="modal-title" id="modalTitle">DETALLE</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const set=(id,val)=>{const e=$(id);if(e)e.textContent=val;};
+const sty=(id,prop,val)=>{const e=$(id);if(e)e.style[prop]=val;};
+const setFill=(id,col)=>{const e=$(id);if(e)e.setAttribute('fill',col);};
+const fmtT=s=>{const m=Math.floor(s/60),sc=s%60;return String(m).padStart(2,"0")+":"+String(sc).padStart(2,"0");};
+const fi=v=>Number.isFinite(v)&&v>-1e6;
+
+/* ══ THERMAL BODY COLOR ENGINE ══ */
+// Color stops: [temp_°C, [R,G,B]]
+const T_STOPS=[
+  [29,  [0,  8, 180]],   // deep blue (hypothermia)
+  [32,  [0, 140, 255]],  // blue
+  [33.5,[0, 220, 220]],  // cyan
+  [35,  [0, 220,  80]],  // green
+  [36.5,[160,230,  0]],  // yellow-green
+  [37.5,[255,200,  0]],  // yellow
+  [38.2,[255,130,  0]],  // orange
+  [39,  [255, 40,  0]],  // red-orange
+  [40,  [200,  0,  0]]   // dark red (critical)
+];
+function tempColor(t){
+  t=Math.max(T_STOPS[0][0],Math.min(T_STOPS[T_STOPS.length-1][0],t));
+  let lo=T_STOPS[0],hi=T_STOPS[T_STOPS.length-1];
+  for(let i=0;i<T_STOPS.length-1;i++){if(t>=T_STOPS[i][0]&&t<T_STOPS[i+1][0]){lo=T_STOPS[i];hi=T_STOPS[i+1];break;}}
+  const f=hi[0]-lo[0]>0?(t-lo[0])/(hi[0]-lo[0]):0;
+  return `rgb(${Math.round(lo[1][0]+(hi[1][0]-lo[1][0])*f)},${Math.round(lo[1][1]+(hi[1][1]-lo[1][1])*f)},${Math.round(lo[1][2]+(hi[1][2]-lo[1][2])*f)})`;
+}
+
+function updateThermalBody(tSkin){
+  if(!tSkin||tSkin<25)return;
+  const tc=tSkin+2.1; // core estimate
+  // Zone temperatures — differential map matching medical thermal imaging
+  const zones={
+    thz_head:  tc-0.5,    // head — slightly below core
+    thz_neck:  tc-0.2,    // neck — close to core
+    thz_torso: tc,        // torso/chest — hottest (core organs)
+    thz_luarm: tc-1.3,    // upper arm
+    thz_ruarm: tc-1.3,
+    thz_lfarm: tSkin+0.3, // forearm — near sensor site
+    thz_rfarm: tSkin+0.3,
+    thz_lhand: tSkin-0.8, // hand — cooler than wrist
+    thz_rhand: tSkin-0.8,
+    thz_lulg:  tc-2.0,    // thigh
+    thz_rulg:  tc-2.0,
+    thz_lllg:  tc-3.5,    // lower leg
+    thz_rllg:  tc-3.5,
+    thz_lfoot: tc-5.5,    // feet — coldest extremity
+    thz_rfoot: tc-5.5
+  };
+  Object.entries(zones).forEach(([id,t])=>setFill(id,tempColor(t)));
+  // Update zone labels
+  const zoneLabel=tc>=39?"CRÍTICO":tc>=38.3?"ALTO":tc>=37.5?"MODERADO":tc>=36.5?"NORMAL":"BAJO";
+  set("thzLabel",zoneLabel);
+  sty("thzLabel","color",tc>=39?"var(--r)":tc>=38.3?"var(--am)":tc>=37.5?"var(--g)":"var(--c)");
+  set("thzCore", tc.toFixed(1));
+  set("thzExtrem", (tc-5.5).toFixed(1));
+}
+
+/* ══ DATA HOLD SYSTEM — nunca muestra "--" si ya hay un valor válido ══ */
+const H={};
+function hold(key,val,valid){
+  if(valid===undefined?fi(val)&&val!==0:valid){H[key]=val;return val;}
+  return H[key]??null;
+}
+function hd(key,fallback="--"){const v=H[key];return v!=null?v:fallback;}
+
+/* ══ HR SMOOTHING (EMA) ══ */
+let emaHR=0;
+const HR_ALPHA=0.25; // 0=more smooth, 1=raw
+function smoothHR(raw){
+  if(!raw||raw<25)return emaHR||null;
+  emaHR=emaHR?Math.round(HR_ALPHA*raw+(1-HR_ALPHA)*emaHR):raw;
+  return emaHR;
+}
+
+/* ══ RRI BUFFER → HRV ══ */
+const rriBuffer=[];
+function pushRRI(rri){
+  if(rri<250||rri>2500)return;
+  rriBuffer.push(rri);if(rriBuffer.length>40)rriBuffer.shift();
+}
+function calcHRV(){
+  if(rriBuffer.length<5)return null;
+  const n=rriBuffer.length,mean=rriBuffer.reduce((s,v)=>s+v,0)/n;
+  const sdnn=Math.sqrt(rriBuffer.reduce((s,v)=>s+(v-mean)**2,0)/n);
+  let ssq=0;for(let i=1;i<n;i++)ssq+=(rriBuffer[i]-rriBuffer[i-1])**2;
+  const rmssd=Math.sqrt(ssq/(n-1));
+  const stress=Math.max(1,Math.min(10,(1000/sdnn)*2));
+  const breath=Math.round(60000/(mean*4));
+  return{sdnn:sdnn.toFixed(0),rmssd:rmssd.toFixed(0),stress:stress.toFixed(1),breath};
+}
+
+/* ══ TRAINING LOAD ══ */
+let tLoad=0,lastZoneTs=Date.now();
+function updateLoad(hr,hrmax){
+  const pct=hr/hrmax*100;
+  const z=pct<60?1:pct<70?2:pct<80?3:pct<90?4:5;
+  const now=Date.now(),dtMin=(now-lastZoneTs)/60000;lastZoneTs=now;
+  tLoad+=dtMin*[0.5,1,2,3.5,5][z-1];
+}
+
+/* ══ PROFILE ══ */
+function prof(){return{hrmax:parseInt($("hrmax").value)||185,hrrest:parseInt($("hrrest").value)||60};}
+["hrmax","hrrest","age"].forEach(id=>$(id).addEventListener("input",()=>{
+  const {hrmax,hrrest}=prof();$("oblaD").textContent="OBLA: "+Math.round(hrrest+0.85*(hrmax-hrrest))+" BPM";}));
+
+/* ══ DATASTORE ══ */
+const DS=(()=>{
+  let st;
+  const mk=()=>({start:null,pts:[],sHr:0,cHr:0,sSk:0,cSk:0,sSpo:0,cSpo:0,pkSk:-Infinity,pkHr:0,pktCount:0});
+  st=mk();
+  function push(p){
+    if(!st.start)st.start=Date.now();st.pts.push(p);st.pktCount++;
+    if(p.hr>25&&p.hr_valid){st.sHr+=p.hr;st.cHr++;st.pkHr=Math.max(st.pkHr,p.hr);}
+    if(p.t_skin>30){st.sSk+=p.t_skin;st.cSk++;st.pkSk=Math.max(st.pkSk,p.t_skin);}
+    if(p.spo2>80){st.sSpo+=p.spo2;st.cSpo++;}
+    return p;
+  }
+  function reset(){st=mk();}
+  function get(){return st;}
+  function elapsed(){return st.start?Math.floor((Date.now()-st.start)/1000):0;}
+  function avgs(){return{hr:st.cHr?st.sHr/st.cHr:NaN,skin:st.cSk?st.sSk/st.cSk:NaN,spo2:st.cSpo?st.sSpo/st.cSpo:NaN};}
+  return{push,reset,get,elapsed,avgs};
+})();
+
+/* ══ METABOLIC MODEL (Beaver/Heck) ══ */
+let prevLac=1,prevLacTs=Date.now();
+function calcMeta(hr){
+  const{hrmax,hrrest}=prof(),hrr=hrmax-hrrest;
+  const phrr=hrr>0?Math.max(0,Math.min(100,(hr-hrrest)/hrr*100)):0;
+  let lac=phrr<40?0.8+phrr*0.018:phrr<70?1.52+(phrr-40)*0.083:4+(phrr-70)*0.22;
+  lac=Math.max(0.5,Math.min(22,lac));
+  const now=Date.now(),dtm=(now-prevLacTs)/60000;
+  const dlac=dtm>0.02?(lac-prevLac)/dtm:0;
+  prevLac=lac;prevLacTs=now;
+  const ph=Math.max(6.7,7.45-lac*0.04);
+  const phase=lac<2?1:lac<4?2:3;
+  const obla=Math.round(hrrest+0.85*hrr);
+  const buffer=Math.max(8,24-Math.max(0,(lac-2)*1.4));
+  const tol=lac<2?"Alta":lac<4?"Media":"Baja";
+  const ri=hrrest>0?(hr-hrrest)/hrrest:0;
+  const gluc=Math.round(85+lac*5.5+phrr*0.08);
+  const rer=Math.min(1.15,0.70+phrr*0.004);
+  const sub=rer<0.80?"Grasa":rer<0.90?"Mixto":"Glucosa";
+  const atp=Math.max(1,Math.min(10,1+phrr*0.09));
+  const pcr=Math.max(5,100-Math.max(0,(phrr-50)*1.3));
+  const vo2=hrr>0?(3.5+((hr-hrrest)/(hrmax-hrrest))*(45-3.5)):0;
+  return{lac,dlac,ph,phase,obla,buffer,tol,ri,gluc,rer,sub,atp,pcr,phrr,vo2:Math.max(0,vo2)};
+}
+
+/* ══ THERMAL RISK ══ */
+function risk(s){
+  if(s<36)return{p:5,c:"#5b9bd5",l:"HIPOTERMIA"};
+  if(s<37.5)return{p:20,c:"#00e676",l:"NORMAL"};
+  if(s<38.3)return{p:45,c:"#69f0ae",l:"CALOR LEVE"};
+  if(s<39)return{p:65,c:"#ff9100",l:"MODERADO"};
+  if(s<39.5)return{p:82,c:"#ff5722",l:"ALTO"};
+  return{p:97,c:"#ff1744",l:"CRÍTICO"};
+}
+function humidex(t,rh){
+  if(!fi(t)||!fi(rh))return NaN;
+  const e=6.105*Math.exp(25.22*(t/(t+273.16))-5.31*Math.log((t+273.16)/273.16));
+  return t+0.5555*(rh/100*e-10);
+}
+
+/* ══ ECG CANVAS ══ */
+const ECG=(()=>{
+  const cv=$("ecgC"),ctx=cv.getContext("2d");
+  const SH=[0,0,.03,.05,.02,-.04,.88,-.24,0,.14,.09,.03,.01,0,0,0,0,0,0,0,0,0,0,0];
+  let off=0,rri=800,run=false;
+  const rsz=()=>{const r=devicePixelRatio;cv.width=cv.offsetWidth*r;cv.height=cv.offsetHeight*r;ctx.scale(r,r);};
+  function draw(){
+    const W=cv.offsetWidth,H=cv.offsetHeight;ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle="rgba(0,216,255,.85)";ctx.lineWidth=1.2;ctx.shadowBlur=5;ctx.shadowColor="#00d8ff";
+    ctx.beginPath();
+    for(let x=0;x<W;x++){const cy=((x+off)/W)%1,si=Math.floor(cy*SH.length),y=H*.5-SH[si]*(H*.42);x?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+    ctx.stroke();
+    const cx=(W-(off%W)+W)%W;ctx.strokeStyle="rgba(255,194,0,.4)";ctx.lineWidth=.8;ctx.shadowBlur=0;ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
+  }
+  function tick(){if(!run)return;off=(off+(cv.offsetWidth||220)/(rri/1000*60)/60)%(cv.offsetWidth||220);draw();requestAnimationFrame(tick);}
+  function start(r){rri=r||800;if(!run){run=true;rsz();tick();}}
+  function upd(r){if(r>300&&r<2000)rri=r;}
+  function stop(){run=false;}
+  new ResizeObserver(rsz).observe(cv);
+  return{start,upd,stop};
+})();
+
+/* ══ HR TREND CANVAS ══ */
+const HRT=(()=>{
+  const cv=$("hrC"),ctx=cv.getContext("2d");
+  const buf=[];
+  const rsz=()=>{const r=devicePixelRatio;cv.width=cv.offsetWidth*r;cv.height=cv.offsetHeight*r;ctx.scale(r,r);};
+  function draw(){
+    const W=cv.offsetWidth,H=cv.offsetHeight;ctx.clearRect(0,0,W,H);
+    if(buf.length<2)return;
+    const valid=buf.filter(v=>v>0);if(!valid.length)return;
+    const mn=Math.min(...valid)-3,mx=Math.max(...valid)+3,rng=mx-mn||1;
+    ctx.strokeStyle="rgba(255,26,58,.8)";ctx.lineWidth=1.5;ctx.shadowBlur=5;ctx.shadowColor="#ff1a3a";
+    ctx.beginPath();
+    buf.forEach((v,i)=>{if(!v)return;const x=(i/(buf.length-1))*W,y=H-((v-mn)/rng)*H*.85-H*.075;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+    ctx.stroke();
+    ctx.fillStyle="rgba(255,26,58,.06)";
+    ctx.beginPath();buf.forEach((v,i)=>{if(!v)return;const x=(i/(buf.length-1))*W,y=H-((v-mn)/rng)*H*.85-H*.075;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+    ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fill();
+  }
+  function push(hr){if(hr>0)buf.push(hr);if(buf.length>120)buf.shift();draw();}
+  new ResizeObserver(()=>{rsz();draw();}).observe(cv);
+  return{push};
+})();
+
+/* ══ SPARKLINE ══ */
+const SPARK=(()=>{
+  const cv=$("sparkC"),ctx=cv.getContext("2d");
+  const sk=[],am=[];
+  const rsz=()=>{const r=devicePixelRatio;cv.width=cv.offsetWidth*r;cv.height=cv.offsetHeight*r;ctx.scale(r,r);};
+  function line(arr,color){
+    const vld=arr.filter(v=>v>0);if(vld.length<2)return;
+    const W=cv.offsetWidth,H=cv.offsetHeight;
+    const mn=Math.min(...vld)-.5,mx=Math.max(...vld)+.5,rng=mx-mn||1;
+    ctx.strokeStyle=color;ctx.lineWidth=1.3;ctx.shadowBlur=3;ctx.shadowColor=color;
+    ctx.beginPath();arr.forEach((v,i)=>{if(!v)return;const x=(i/(arr.length-1))*(W-4)+2,y=H-((v-mn)/rng)*(H-8)-4;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+    ctx.stroke();
+  }
+  function push(s,a){sk.push(s||0);am.push(a||0);if(sk.length>60){sk.shift();am.shift();}
+    const W=cv.offsetWidth,H=cv.offsetHeight;ctx.clearRect(0,0,W,H);ctx.shadowBlur=0;
+    line(sk,"rgba(255,194,0,.8)");line(am,"rgba(0,216,255,.8)");}
+  new ResizeObserver(()=>{rsz();}).observe(cv);
+  return{push};
+})();
+
+/* ══ IMU SESSION ══ */
+let imu={pkVel:0,dist:0,prevStr:0};
+let pkHr=0,pktCount=0;
+
+/* ══ BLE MANAGER ══ */
+const BLE=(()=>{
+  const SVC="0000ffe0-0000-1000-8000-00805f9b34fb",F1="0000ffe1-0000-1000-8000-00805f9b34fb",F3="0000ffe3-0000-1000-8000-00805f9b34fb";
+  let dev=null,c1=null,c3=null,conn=false,conning=false,rx="";
+  let autoR=false,rTimer=null,manDis=false,retries=0;
+  const MAX_R=6;
+  function norm(raw){
+    const p={...raw};
+    if(p.t_skin==null&&raw?.t_wrist!=null)p.t_skin=raw.t_wrist;
+    if(p.t_amb==null&&raw?.t_ambient!=null)p.t_amb=raw.t_ambient;
+    const cr=raw?.contact;
+    if(typeof cr==="string"){p.contact_quality=cr;p.contact=cr!=="NONE";}
+    else{p.contact=!!cr;p.contact_quality=raw?.quality||(p.contact?"GOOD":"NONE");}
+    const d={hr:0,hr_avg:0,hr_valid:false,spo2:0,rri:0,pi:0,hum:0,pres:0,gas:0,
+             imu_ok:false,vel:0,jumps:0,strides:0,stab:100,placement:"wrist",
+             max_ok:false,mlx_ok:false,env_ok:false};
+    Object.keys(d).forEach(k=>{if(p[k]==null)p[k]=d[k];});return p;
+  }
+  function onDis(){conn=false;c1=null;c3=null;rx="";setCS("disconnected");clearTimeout(rTimer);
+    if(manDis){manDis=false;autoR=false;retries=0;return;}
+    autoR=true;retries=0;rTimer=setTimeout(reconnect,2000);}
+  async function reconnect(){
+    if(!dev||conn||conning)return;conning=true;setCS("connecting");
+    try{const s=await dev.gatt.connect();const sv=await s.getPrimaryService(SVC);
+      c1=await sv.getCharacteristic(F1);c3=await sv.getCharacteristic(F3);
+      await c1.startNotifications();c1.addEventListener("characteristicvaluechanged",onF1);
+      await c3.startNotifications();c3.addEventListener("characteristicvaluechanged",onF3);
+      conn=true;autoR=false;retries=0;setCS("connected",dev.name||"CSAV-01");
+    }catch(e){retries++;
+      const fatal=e?.message?.includes("no longer in range")||retries>=MAX_R;
+      autoR&&!fatal?(setCS("disconnected"),rTimer=setTimeout(reconnect,3000)):(autoR=false,retries=0,setCS("disconnected"));
+    }finally{conning=false;}
+  }
+  function onF1(ev){
+    rx+=new TextDecoder().decode(ev.target.value);
+    let d=0,st=-1;
+    for(let i=0;i<rx.length;i++){
+      if(rx[i]==="{"){if(!d)st=i;d++;}
+      else if(rx[i]==="}"&&--d===0&&st!==-1){
+        const j=rx.slice(st,i+1);rx=rx.slice(i+1);i=-1;st=-1;
+        try{render(DS.push(norm(JSON.parse(j))));}catch(e){console.warn("FFE1:",e);}
+      }
+    }
+    if(rx.length>4096)rx="";
+  }
+  function onF3(ev){
+    const t=new TextDecoder().decode(ev.target.value);$("cmdResp").textContent=t;
+    try{const o=JSON.parse(t);if(o.cmd==="I2C_SCAN"){
+      const nm={"0x57":"MAX","0x5a":"MLX","0x68":"MPU","0x76":"BME","0x77":"BME"};
+      $("cmdResp").textContent=(o.devices||[]).map(a=>a+" "+(nm[a.toLowerCase()]||"")).join(" · ")||"Sin disp.";
+    }}catch(_){}
+  }
+  async function connect(){
+    if(conn||conning)return;
+    // Verificar soporte BLE
+    if(!navigator.bluetooth){
+      notice("danger","Web Bluetooth no disponible","Usar Chrome o Edge. Abrir desde localhost o HTTPS.");
+      return;
+    }
+    conning=true;
+    try{
+      // Paso 1: picker de dispositivo
+      notice("caution","Abriendo selector BLE","Selecciona CSAV-01 en la ventana del navegador...");
+      dev=await navigator.bluetooth.requestDevice({
+        acceptAllDevices:true,
+        optionalServices:[SVC,"0000180d-0000-1000-8000-00805f9b34fb","0000180f-0000-1000-8000-00805f9b34fb"]
+      });
+      setCS("connecting");
+      manDis=false;
+      dev.addEventListener("gattserverdisconnected",onDis);
+
+      // Paso 2: conectar GATT
+      notice("caution","GATT conectando…","Estableciendo conexión con "+dev.name+"...");
+      const s=await dev.gatt.connect();
+
+      // Paso 3: obtener servicio FFE0
+      notice("caution","Servicio FFE0…","Verificando servicio de telemetría...");
+      const sv=await s.getPrimaryService(SVC);
+
+      // Paso 4: características FFE1 y FFE3
+      c1=await sv.getCharacteristic(F1);
+      c3=await sv.getCharacteristic(F3);
+      await c1.startNotifications();
+      c1.addEventListener("characteristicvaluechanged",onF1);
+      await c3.startNotifications();
+      c3.addEventListener("characteristicvaluechanged",onF3);
+
+      conn=true;
+      setCS("connected",dev.name||"CSAV-01");
+      notice("safe","BLE conectado","CSAV-01 · telemetría activa · "+dev.name);
+    }catch(e){
+      conning=false;
+      if(e?.name==="NotFoundError"){
+        notice("caution","Selección cancelada","No se eligió ningún dispositivo.");
+      }else if(e?.name==="SecurityError"){
+        notice("danger","Permiso BLE denegado","Revisa permisos Bluetooth en Ajustes del sistema > Privacidad.");
+      }else if(e?.name==="NetworkError"||e?.message?.includes("GATT")){
+        notice("danger","Fallo GATT · "+e.name,
+          "El dispositivo rechazó la conexión. Prueba: 1) Reiniciar ESP32 (botón RST)  2) Olvidar dispositivo en chrome://bluetooth-internals  3) Reconectar.");
+      }else if(e?.message?.includes("getPrimaryService")||e?.message?.includes("service")){
+        notice("danger","Servicio FFE0 no encontrado",
+          "El firmware podría estar en deep sleep. Agita el dispositivo para activarlo, espera 5s y reintenta.");
+      }else{
+        notice("danger","Error BLE: "+(e?.name||"desconocido"), (e?.message||"")+" — Ver consola para detalles.");
+      }
+      console.error("[BLE connect]",e?.name, e?.message, e);
+      setCS("disconnected");
+      return;
+    }finally{conning=false;}
+  }
+  async function disconnect(){manDis=true;autoR=false;clearTimeout(rTimer);
+    if(dev?.gatt.connected)await dev.gatt.disconnect();conn=false;setCS("disconnected");}
+  async function send(cmd){if(!conn||!c3){$("cmdResp").textContent="No conectado";return;}
+    try{await c3.writeValue(new TextEncoder().encode(cmd));$("cmdResp").textContent="→ "+cmd;}
+    catch(e){$("cmdResp").textContent=e.message;}}
+  function isConn(){return conn;}
+  return{connect,disconnect,send,isConn};
+})();
+
+/* ══ RENDER ══ */
+let lastPkt=null;
+function render(p){
+  lastPkt=p;pktCount++;
+  if(p.standby===true){setCS("standby");return;}
+  if(BLE.isConn())setCS("connected",p.device);
+  const safe=(fn,name)=>{try{fn();}catch(e){console.warn("[render]",name,e);}};
+  safe(()=>rSensors(p),"sensors");
+  safe(()=>rVitals(p),"vitals");
+  safe(()=>rThermal(p),"thermal");
+  safe(()=>rLac(p),"lac");
+  safe(()=>rAtm(p),"atm");
+  safe(()=>rMotion(p),"motion");
+  safe(()=>rSession(),"session");
+  ECG.start(p.rri||(H.rri)||800); ECG.upd(p.rri);
+  if(p.hr>25) HRT.push(smoothHR(p.hr));
+  if(p.rri) pushRRI(p.rri);
+  if(p.hr_valid&&p.hr>25) updateLoad(p.hr,prof().hrmax);
+}
+
+function rSensors(p){
+  const s=(id,ok)=>{const e=$(id);e.className="sp "+(ok?"ok":"fail");};
+  s("pMax",p.max_ok);s("pMlx",p.mlx_ok);s("pBme",p.env_ok);s("pImu",p.imu_ok);
+}
+
+function rVitals(p){
+  const hr=p.hr_valid&&p.hr>25?smoothHR(p.hr):null;
+  hold("hr",hr,hr!=null);hold("spo2",p.spo2,p.spo2>80);hold("rri",p.rri,p.rri>200);
+  hold("pi",p.pi,p.pi>0);hold("hrAvg",p.hr_avg,p.hr_avg>0);
+  if(hr)pkHr=Math.max(pkHr,hr);
+  const dHR=hd("hr");const dSpo=hd("spo2");
+  set("aHR",  dHR??"--");
+  set("hHR",  dHR??"--");
+  set("aSpo2", dSpo?dSpo.toFixed(1)+"%":"--.--%");
+  set("hSpo2", dSpo?dSpo.toFixed(1)+"%":"--");
+  const ring=$("hrRing");
+  if(dHR&&ring){
+    const c=dHR<100?"#00d8ff":dHR<130?"#00e676":dHR<155?"#ffc200":dHR<170?"#ff9100":"#ff1a3a";
+    ring.setAttribute("stroke",c);
+    const p0=prof(),pct=dHR/p0.hrmax*100;
+    [["zb1",0,60],["zb2",60,70],["zb3",70,80],["zb4",80,90],["zb5",90,200]].forEach(([id,lo,hi])=>{const e=$(id);if(e)e.classList.toggle("on",pct>=lo&&pct<hi);});
+    [["zi1",0,60],["zi2",60,70],["zi3",70,80],["zi4",80,90],["zi5",90,200]].forEach(([id,lo,hi])=>{const e=$(id);if(e)e.classList.toggle("on",pct>=lo&&pct<hi);});
+  }
+  const q=p.contact_quality||"NONE";const b=$("qb");
+  if(b){b.dataset.q=q;b.textContent=q==="GOOD"?"SEÑAL BUENA":q==="WEAK"?"SEÑAL DÉBIL":"SIN CONTACTO";}
+  set("rri",   hd("rri","---"));
+  set("hrAvg", hd("hrAvg","--"));
+  set("hrPeak", pkHr>0?pkHr:"--");
+  set("pi",    hd("pi","-.-"));
+  const hrv=calcHRV();
+  if(hrv){set("hSdnn",hrv.sdnn);set("hRmssd",hrv.rmssd);set("hStress",hrv.stress);set("hBreath",hrv.breath);}
+  set("tLoad", tLoad.toFixed(1));
+}
+
+function rThermal(p){
+  hold("t_skin",p.t_skin,p.t_skin>30);hold("t_amb",p.t_amb,p.t_amb>0&&p.t_amb<60);hold("hum",p.hum,p.hum>0);
+  const sk=hd("t_skin",null),am=hd("t_amb",null),hm=hd("hum",null);
+  set("tSkin", sk?sk.toFixed(1):"--.-"); set("hSkin", sk?sk.toFixed(1):"--");
+  set("tCore", sk?(sk+2.1).toFixed(1):"--.-"); set("tAmb", am?am.toFixed(1):"--.-");
+  set("deltaT",(sk&&am)?((sk-am)>0?"+":"")+(sk-am).toFixed(1):"-.-");
+  set("humidex",(am&&hm)?humidex(am,hm).toFixed(1)+" °C":"--");
+  if(sk){const r=risk(sk);sty("riskFill","width",r.p+"%");sty("riskFill","background",r.c);sty("riskFill","boxShadow","0 0 6px "+r.c);set("riskTxt",r.l);sty("riskTxt","color",r.c);}
+  if(sk) updateThermalBody(sk);
+  if(sk&&am)SPARK.push(sk,am);
+}
+
+function rLac(p){
+  // Usar FC actual si válida, si no la última retenida por EMA
+  const useHR = (p.hr_valid && p.hr>25) ? p.hr : (emaHR>25 ? emaHR : null);
+  if(!useHR) return;
+  const m = calcMeta(useHR);
+  if(!m.lac) return;
+  // Hold all metabolic values
+  Object.keys(m).forEach(k=>H["m_"+k]=m[k]);
+  set("lacVal",  m.lac.toFixed(2)); set("hLac", m.lac.toFixed(2));
+  const phases=["FASE I · AERÓBICA <2","FASE II · UMBRAL 2–4","FASE III · ANAERÓBICA >4"];
+  const pcols=["#00e676","#ff9100","#ff1a3a"];
+  const lp=$("lacPhase");
+  if(lp){lp.textContent=phases[m.phase-1];lp.style.color=pcols[m.phase-1];lp.style.borderColor=pcols[m.phase-1]+"66";}
+  set("dlac",  (m.dlac>=0?"+":"")+m.dlac.toFixed(2));
+  set("ph",    m.ph.toFixed(2));
+  set("oblaHR",m.obla);
+  set("phrr",  m.phrr.toFixed(0)+"%");
+  set("oblaD", "OBLA: "+m.obla+" BPM");
+  const on=m.phase===1?2:m.phase===2?4:6;
+  for(let i=1;i<=6;i++)sty("ob"+i,"opacity",i<=on?"1":".15");
+  // metabolic
+  set("mBuf",  m.buffer.toFixed(1)); sty("mBufBar","width",(m.buffer/24*100)+"%");
+  const mt=$("mTol");
+  if(mt){mt.textContent=m.tol;mt.style.color=m.tol==="Alta"?"var(--gr)":m.tol==="Media"?"var(--am)":"var(--r)";}
+  set("mTolS", "Fase "+m.phase); set("mGluc",m.gluc);
+  set("mRec",  m.ri.toFixed(2));  set("mRer",m.rer.toFixed(2)); set("mSub",m.sub);
+  set("mAtp",  m.atp.toFixed(1)); sty("mAtpBar","width",(m.atp/10*100)+"%");
+  set("mPcr",  m.pcr.toFixed(0)); sty("mPcrBar","width",m.pcr+"%");
+  set("mVo2",  m.vo2.toFixed(1));
+}
+
+function rAtm(p){
+  hold("hum",p.hum,p.hum>0);hold("pres",p.pres,p.pres>800);hold("gas",p.gas,p.gas>0);
+  set("hum",  hd("hum","--")); set("pres", hd("pres","---"));
+  const hm=hd("hum",null),tAmb=hd("t_amb",null);
+  const sw=tAmb&&hm?Math.min(100,Math.round(hm*.55+(tAmb-18)*1.4)):null;
+  set("sweat", sw!=null?sw:hd("sweat","--")); if(sw!=null)hold("sweat",sw,true);
+  const gas=hd("gas",null);
+  set("gas", gas?((gas/1000).toFixed(1)+"kΩ · "+(gas>50000?"BUENA":gas>20000?"ACEPTABLE":"BAJA")):"--- kΩ");
+}
+
+function rMotion(p){
+  const v=p.vel||0,str=p.strides||0;
+  if(v>imu.pkVel)imu.pkVel=v;
+  const ns=str-imu.prevStr;if(ns>0){imu.dist+=ns*.75;imu.prevStr=str;}
+  hold("vel",v,v>0);hold("strides",str,str>0);hold("jumps",p.jumps,p.jumps>0);hold("stab",p.stab,fi(p.stab));
+  set("vel",   hd("vel","-.-")); set("velK", v>0?(v*3.6).toFixed(1)+" km/h":"m/s");
+  set("jumps", hd("jumps","--")); set("strides", hd("strides","--"));
+  set("distV", imu.dist>0?(imu.dist>1000?(imu.dist/1000).toFixed(2)+"km":Math.round(imu.dist)+"m"):"--");
+  const cad=v>0?Math.round(v/.375*60):0; set("cad", cad>0?cad:"--");
+  set("vPeak", imu.pkVel>0?(imu.pkVel*3.6).toFixed(1):"--");
+  const st=hd("stab",100);
+  set("stabPct", p.imu_ok?Math.round(st)+"":hd("stabPct","--"));
+  const sw2=p.imu_ok?st:hd("stabW",100); sty("stabF","width",sw2+"%"); if(p.imu_ok)hold("stabW",st,true);
+  const sc=st>70?"var(--gr)":st>40?"var(--am)":"var(--r)"; sty("stabF","background",sc);
+  if(p.placement)updPl(p.placement);
+}
+
+function rSession(){
+  const a=DS.avgs(),s=DS.get(),el=DS.elapsed();
+  set("fTimer", fmtT(el)); set("hSess", fmtT(el));
+  set("sHr",   fi(a.hr)?Math.round(a.hr)+" bpm":"-- bpm");
+  set("sSkin", (fi(a.skin)?a.skin.toFixed(1):"--")+" / "+(s.pkSk>-Infinity?s.pkSk.toFixed(1):"--")+" °C");
+  set("sSpo2", fi(a.spo2)?a.spo2.toFixed(1)+" %":"-- %");
+  set("sMot",  hd("strides","--")+" / "+Math.round(imu.dist)+" m");
+  set("fPkts", pktCount);
+  set("fUptime",fmtT(el));
+}
+
+/* ══ CONNECTION STATE ══ */
+function setCS(s,name){
+  const chip=$("chip"),btn=$("connBtn"),stby=$("stbyBtn"),wake=$("wakeBtn"),pwr=$("pwrBtn");
+  chip.dataset.s=s;
+  if(s==="connected"){
+    $("chipTxt").textContent=(name||"CSAV-01").toUpperCase().slice(0,12);btn.textContent="DISCONNECT";
+    stby.style.display="";stby.disabled=false;wake.style.display="none";pwr.style.display="";pwr.disabled=false;
+  }else if(s==="standby"){
+    $("chipTxt").textContent="STANDBY";stby.style.display="none";wake.style.display="";wake.disabled=false;pwr.style.display="none";
+  }else if(s==="connecting"){
+    $("chipTxt").textContent="LINKING…";btn.textContent="CANCEL";
+    stby.style.display="none";wake.style.display="none";pwr.style.display="none";
+  }else{
+    $("chipTxt").textContent="OFFLINE";btn.textContent="BLE CONNECT";
+    stby.style.display="none";wake.style.display="none";pwr.style.display="none";
+    stby.disabled=wake.disabled=pwr.disabled=true;
+  }
+}
+
+/* ══ NOTICE ══ */
+function notice(tone,title,text){
+  const n=$("notice");n.dataset.t=tone;n.classList.add("on");
+  $("nTag").textContent=tone.toUpperCase();$("nTitle").textContent=title;$("nText").textContent=text;
+  clearTimeout(n._t);n._t=setTimeout(()=>n.classList.remove("on"),6000);
+}
+
+/* ══ PLACEMENT ══ */
+function updPl(p){
+  const ic=p==="chest";
+  $("plW").style.background=ic?"transparent":"rgba(0,216,255,.14)";$("plW").style.color=ic?"var(--td)":"var(--c)";
+  $("plC").style.background=ic?"rgba(0,216,255,.14)":"transparent";$("plC").style.color=ic?"var(--c)":"var(--td)";
+}
+function setPlacement(p){if(BLE.isConn())BLE.send("PLACEMENT:"+p.toUpperCase());updPl(p);}
+
+/* ══ CLOCK ══ */
+function updateClock(){
+  const n=new Date();
+  $("clock").childNodes[0].textContent=n.toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  $("dateLbl").textContent=n.toLocaleDateString("es",{weekday:"short",day:"2-digit",month:"short"});
+}
+
+/* ══ MODALS ══ */
+const modalContent={
+  thermal:()=>({title:"CINÉTICA TÉRMICA — DETALLE",html:`
+    <div class="modal-grid">
+      <div><div class="m-row"><span class="m-lbl">T° Cutánea</span><span class="m-val g">${hd("t_skin","--")} °C</span></div>
+        <div class="m-row"><span class="m-lbl">T° Corporal est.</span><span class="m-val g">${hd("t_skin",null)?((hd("t_skin"))+2.1).toFixed(1):"--"} °C</span></div>
+        <div class="m-row"><span class="m-lbl">T° Ambiente</span><span class="m-val c">${hd("t_amb","--")} °C</span></div>
+        <div class="m-row"><span class="m-lbl">ΔT Piel/Amb</span><span class="m-val c">${(hd("t_skin",null)&&hd("t_amb",null))?((hd("t_skin")-hd("t_amb"))>0?"+":"")+(hd("t_skin")-hd("t_amb")).toFixed(1):"--"} °C</span></div>
+        <div class="m-row"><span class="m-lbl">Humidex</span><span class="m-val">${$("humidex").textContent}</span></div>
+        <div class="m-row"><span class="m-lbl">Riesgo térmico</span><span class="m-val r">${$("riskTxt").textContent}</span></div>
+      </div>
+      <div><p style="font-size:.68rem;color:var(--td);line-height:1.6">
+        <strong style="color:var(--c)">T° corporal</strong> estimada como muñeca + 2.1°C (corrección media adulto en actividad).<br><br>
+        <strong style="color:var(--g)">Humidex</strong> combina T° y humedad relativa para representar sensación térmica real.<br><br>
+        <strong style="color:var(--r)">Riesgo</strong>: Normal &lt;37.5 · Leve 37.5–38.3 · Moderado 38.3–39 · Alto &gt;39.
+      </p></div>
+    </div>`}),
+  atm:()=>({title:"ATMOSPHERE — DETALLE",html:`
+    <div class="modal-grid">
+      <div>
+        <div class="m-row"><span class="m-lbl">Humedad relativa</span><span class="m-val c">${hd("hum","--")} %</span></div>
+        <div class="m-row"><span class="m-lbl">Presión barométrica</span><span class="m-val c">${hd("pres","--")} hPa</span></div>
+        <div class="m-row"><span class="m-lbl">Índice sweat</span><span class="m-val c">${$("sweat").textContent}</span></div>
+        <div class="m-row"><span class="m-lbl">Gas VOC</span><span class="m-val">${$("gas").textContent}</span></div>
+      </div>
+      <div><p style="font-size:.68rem;color:var(--td);line-height:1.6">
+        <strong style="color:var(--c)">BME680</strong> mide 4 parámetros: T°, humedad, presión y resistencia de gas VOC.<br><br>
+        <strong style="color:var(--gr)">Calidad de aire</strong>: &gt;50kΩ = buena · 20–50kΩ = aceptable · &lt;20kΩ = baja.<br><br>
+        <strong style="color:var(--am)">Sweat index</strong> = hum×0.55 + (T°-18)×1.4 — mayor valor = mayor riesgo de deshidratación.
+      </p></div>
+    </div>`}),
+  mot:()=>({title:"KINETICS · GY-91 — DETALLE",html:`
+    <div class="modal-grid">
+      <div>
+        <div class="m-row"><span class="m-lbl">Velocidad</span><span class="m-val c">${hd("vel","--")} m/s · ${hd("vel",null)?(hd("vel")*3.6).toFixed(1)+" km/h":"--"}</span></div>
+        <div class="m-row"><span class="m-lbl">Pasos sesión</span><span class="m-val c">${hd("strides","--")}</span></div>
+        <div class="m-row"><span class="m-lbl">Saltos sesión</span><span class="m-val r">${hd("jumps","--")}</span></div>
+        <div class="m-row"><span class="m-lbl">Distancia est.</span><span class="m-val">${imu.dist>0?Math.round(imu.dist)+" m":"--"}</span></div>
+        <div class="m-row"><span class="m-lbl">Vel. pico sesión</span><span class="m-val g">${imu.pkVel>0?(imu.pkVel*3.6).toFixed(1)+" km/h":"--"}</span></div>
+        <div class="m-row"><span class="m-lbl">Estabilización</span><span class="m-val">${hd("stab","--")}%</span></div>
+        <div class="m-row"><span class="m-lbl">IMU chip</span><span class="m-val" style="color:var(--td)">MPU-6500 (GY-91 clon)</span></div>
+      </div>
+      <div><p style="font-size:.68rem;color:var(--td);line-height:1.6">
+        <strong style="color:var(--c)">Velocidad</strong>: calculada desde cadencia de zancadas (STRIDE_LEN=0.75m).<br><br>
+        <strong style="color:var(--r)">Saltos</strong>: fase de vuelo detectada cuando aceleración total &lt;0.30g durante &gt;80ms.<br><br>
+        <strong style="color:var(--gr)">Estabilización</strong>: 100% = quieto, 0% = máxima vibración (varianza rolling 20 muestras).<br><br>
+        <strong style="color:var(--am)">Eje de detección</strong>: Muñeca=Y · Pecho=Z del acelerómetro.
+      </p></div>
+    </div>`}),
+  lac:()=>({title:"MODELO LACTATO · BEAVER/HECK 1985",html:`
+    <div class="modal-grid">
+      <div>
+        <div class="m-row"><span class="m-lbl">Lactato est.</span><span class="m-val r">${hd("m_lac",null)?H.m_lac.toFixed(2):"--"} mmol/L</span></div>
+        <div class="m-row"><span class="m-lbl">d[Lac]/dt</span><span class="m-val">${H.m_dlac!=null?(H.m_dlac>=0?"+":"")+H.m_dlac.toFixed(2):"--"} mmol/L·min⁻¹</span></div>
+        <div class="m-row"><span class="m-lbl">pH muscular</span><span class="m-val">${H.m_ph!=null?H.m_ph.toFixed(2):"--"}</span></div>
+        <div class="m-row"><span class="m-lbl">OBLA (Sjodin 1981)</span><span class="m-val g">${H.m_obla??"--"} BPM</span></div>
+        <div class="m-row"><span class="m-lbl">%FC Reserva</span><span class="m-val c">${H.m_phrr!=null?H.m_phrr.toFixed(0):"--"}%</span></div>
+        <div class="m-row"><span class="m-lbl">Fase metabólica</span><span class="m-val">${H.m_phase?["I · Aeróbica","II · Umbral","III · Anaeróbica"][H.m_phase-1]:"--"}</span></div>
+      </div>
+      <div><p style="font-size:.68rem;color:var(--td);line-height:1.6">
+        <strong style="color:var(--r)">Modelo tri-fásico</strong> (Beaver 1985): Lac = f(%HRR) exponencial.<br>
+        Fase I &lt;2 mmol/L · Fase II 2–4 · Fase III &gt;4.<br><br>
+        <strong style="color:var(--am)">OBLA</strong>: FC en la cual el lactato supera 4 mmol/L sostenido (Heck 1985) ≈ 85% FC reserva.<br><br>
+        <strong style="color:var(--c)">pH</strong>: estimado como 7.45 − [Lac]×0.04 (Sahlin 1978).
+      </p></div>
+    </div>`}),
+  meta:()=>({title:"ESTADO METABÓLICO — DETALLE",html:`
+    <div class="modal-grid">
+      <div>
+        <div class="m-row"><span class="m-lbl">Buffer ácido-base</span><span class="m-val c">${H.m_buffer!=null?H.m_buffer.toFixed(1):"--"} mmol/L</span></div>
+        <div class="m-row"><span class="m-lbl">Tolerancia lactato</span><span class="m-val">${H.m_tol??"--"}</span></div>
+        <div class="m-row"><span class="m-lbl">Glucosa est.</span><span class="m-val g">${H.m_gluc??"--"} mg/dL</span></div>
+        <div class="m-row"><span class="m-lbl">RER estimado</span><span class="m-val c">${H.m_rer!=null?H.m_rer.toFixed(2):"--"}</span></div>
+        <div class="m-row"><span class="m-lbl">Sustrato dominante</span><span class="m-val">${H.m_sub??"--"}</span></div>
+        <div class="m-row"><span class="m-lbl">ATP relativo (1-10)</span><span class="m-val g">${H.m_atp!=null?H.m_atp.toFixed(1):"--"}</span></div>
+        <div class="m-row"><span class="m-lbl">PCr estimado</span><span class="m-val c">${H.m_pcr!=null?H.m_pcr.toFixed(0):"--"} %</span></div>
+        <div class="m-row"><span class="m-lbl">VO₂ relativo est.</span><span class="m-val">${H.m_vo2!=null?H.m_vo2.toFixed(1):"--"} ml/kg·min</span></div>
+      </div>
+      <div><p style="font-size:.68rem;color:var(--td);line-height:1.6">
+        <strong style="color:var(--c)">Buffer</strong>: bicarbonato disponible (~24 − exceso ácido).<br>
+        <strong style="color:var(--g)">Glucosa</strong>: proxy = 85 + [Lac]×5.5 + %HRR×0.08.<br>
+        <strong style="color:var(--c)">RER</strong>: 0.70 (grasa pura) → 1.0+ (glucosa/anaeróbico).<br>
+        <strong style="color:var(--g)">VO₂</strong>: modelo lineal Swain 1994 desde %HRR.
+      </p></div>
+    </div>`}),
+  hrv:()=>({title:"HRV · VARIABILIDAD CARDÍACA",html:`
+    <div class="modal-grid">
+      <div>
+        <div class="m-row"><span class="m-lbl">SDNN</span><span class="m-val c">${$("hSdnn").textContent} ms</span></div>
+        <div class="m-row"><span class="m-lbl">RMSSD</span><span class="m-val r">${$("hRmssd").textContent} ms</span></div>
+        <div class="m-row"><span class="m-lbl">Índice estrés</span><span class="m-val">${$("hStress").textContent} /10</span></div>
+        <div class="m-row"><span class="m-lbl">Frec. respiratoria</span><span class="m-val">${$("hBreath").textContent} resp/min</span></div>
+        <div class="m-row"><span class="m-lbl">Carga entreno (TSS)</span><span class="m-val g">${tLoad.toFixed(1)}</span></div>
+        <div class="m-row"><span class="m-lbl">Muestras RRI</span><span class="m-val">${rriBuffer.length}/40</span></div>
+      </div>
+      <div><p style="font-size:.68rem;color:var(--td);line-height:1.6">
+        <strong style="color:var(--c)">SDNN</strong>: desviación estándar de intervalos RRI. Alto = buena recuperación.<br>
+        <strong style="color:var(--r)">RMSSD</strong>: raíz cuadrática media de diferencias sucesivas. Refleja tono vagal.<br>
+        <strong style="color:var(--am)">Estrés</strong>: 1=bajo·10=alto (1000/SDNN×2).<br>
+        <strong style="color:var(--gr)">TSS</strong>: Training Stress Score acumulado por zonas en sesión.
+      </p></div>
+    </div>`})
+};
+
+function openModal(id){
+  const c=modalContent[id]?.();if(!c)return;
+  $("modalTitle").textContent=c.title;$("modalBody").innerHTML=c.html;
+  $("modalOverlay").classList.add("on");
+}
+function closeModal(e){if(!e||e.target===$("modalOverlay"))$("modalOverlay").classList.remove("on");}
+
+/* ══ HISTORY ══ */
+const SK="csav_s";
+let lastSavedPkt=null;
+function saveSess(){
+  const el=DS.elapsed();if(el<10)return null;
+  const a=DS.avgs(),s=DS.get();
+  const rec={ts:Date.now(),dur:el,hr:Math.round(a.hr)||0,skin:+(a.skin||0).toFixed(1),
+    spo2:+(a.spo2||0).toFixed(1),peakSkin:+(s.pkSk>-Infinity?s.pkSk:0).toFixed(1),
+    jumps:lastPkt?.jumps||0,strides:lastPkt?.strides||0,
+    dist:+imu.dist.toFixed(0),peakVel:+(imu.pkVel*3.6).toFixed(1)};
+  try{const h=JSON.parse(localStorage.getItem(SK)||"[]");h.unshift(rec);if(h.length>20)h.length=20;localStorage.setItem(SK,JSON.stringify(h));}catch(_){}
+  return rec;
+}
+function renderHist(){
+  const el=$("histList");
+  try{const h=JSON.parse(localStorage.getItem(SK)||"[]");
+    if(!h.length){el.innerHTML="<li>Sin sesiones guardadas.</li>";return;}
+    el.innerHTML=h.map(s=>{
+      const d=new Date(s.ts);
+      const dt=d.toLocaleDateString("es",{day:"2-digit",month:"short"})+" "+d.toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"});
+      const p=[fmtT(s.dur),s.hr?"FC "+s.hr+" bpm":"",s.skin?"Piel "+s.skin+"°C":"",s.jumps?s.jumps+" saltos":"",s.dist?s.dist+"m":""].filter(Boolean).join(" · ");
+      return`<li><strong>${dt}</strong> · ${p}</li>`;
+    }).join("");
+  }catch(_){el.innerHTML="";}
+}
+
+/* ══ NEW SESSION ══ */
+function resetDisplay(){
+  // Borrar holds de sesión (mantener t_skin/t_amb/hum/pres/gas — son lecturas de sensor continuas)
+  const keepKeys=new Set(["t_skin","t_amb","hum","pres","gas","sweat"]);
+  Object.keys(H).forEach(k=>{ if(!keepKeys.has(k)) delete H[k]; });
+
+  // Vitals
+  set("aHR","--"); set("hHR","--");
+  set("aSpo2","--.--%"); set("hSpo2","--");
+  set("rri","---"); set("hrAvg","--"); set("hrPeak","--"); set("pi","-.-");
+  const qb=$("qb"); if(qb){qb.dataset.q="NONE";qb.textContent="SIN CONTACTO";}
+  // Zonas FC a off
+  ["zb1","zb2","zb3","zb4","zb5","zi1","zi2","zi3","zi4","zi5"]
+    .forEach(id=>{const e=$(id);if(e)e.classList.remove("on");});
+
+  // Lactato
+  set("lacVal","-.--"); set("hLac","--");
+  set("dlac","+0.00"); set("ph","7.41");
+  set("oblaHR","---"); set("phrr","--");
+  const lp=$("lacPhase");
+  if(lp){lp.textContent="FASE I · AERÓBICA <2";lp.style.color="#00e676";lp.style.borderColor="#00e67666";}
+  for(let i=1;i<=6;i++) sty("ob"+i,"opacity",".15");
+
+  // Metabólico
+  set("mBuf","--.-"); set("mTol","--"); set("mTolS","");
+  set("mGluc","--"); set("mRec","0.00"); set("mRer","0.--");
+  set("mSub","--"); set("mAtp","-.-"); set("mPcr","--"); set("mVo2","--.-");
+  sty("mBufBar","width","0%"); sty("mAtpBar","width","0%"); sty("mPcrBar","width","0%");
+
+  // Movimiento
+  set("vel","-.-"); set("velK","m/s");
+  set("jumps","--"); set("strides","--");
+  set("distV","--"); set("cad","--"); set("vPeak","--");
+  set("stabPct","--");
+  sty("stabF","width","0%"); sty("stabF","background","var(--td)");
+
+  // HRV
+  set("hSdnn","--"); set("hRmssd","--"); set("hStress","--");
+  set("hBreath","--"); set("tLoad","0.0");
+
+  // Sesión bar y footer
+  set("sHr","-- bpm"); set("sSkin","-- / -- °C");
+  set("sSpo2","-- %"); set("sMot","-- / -- m");
+  set("fTimer","00:00"); set("hSess","00:00");
+  set("fPkts","0"); set("fUptime","00:00");
+
+  ECG.stop();
+}
+
+async function newSess(){
+  const saved=saveSess();
+
+  // 1. Enviar RESET al firmware PRIMERO (awaited)
+  if(BLE.isConn()){
+    try{ await BLE.send("RESET"); }
+    catch(e){ console.warn("RESET send error:",e); }
+  }
+
+  // 2. Reset estado local
+  DS.reset();
+  imu={pkVel:0,dist:0,prevStr:0};
+  pkHr=0; pktCount=0; emaHR=0;
+  tLoad=0; lastZoneTs=Date.now();
+  rriBuffer.length=0; lastPkt=null;
+  prevLac=1; prevLacTs=Date.now();
+
+  // 3. Limpiar DOM inmediatamente — sin esperar al próximo paquete BLE
+  resetDisplay();
+
+  renderHist();
+  const msg=saved
+    ? fmtT(saved.dur)+" guardada · FC "+saved.hr+" bpm · "+Math.round(saved.dist)+" m"
+    : "Firmware y HTML reiniciados a cero.";
+  notice("safe","↺ SESIÓN REINICIADA",msg);
+}
+
+/* ══ EXPORT ══ */
+function exportSess(){
+  const s=DS.get();if(!s.pts.length){notice("caution","Sin datos","Nada para exportar.");return;}
+  const blob=new Blob([JSON.stringify({device:lastPkt?.device||"CSAV-01",start:new Date(s.start).toISOString(),duration:DS.elapsed(),avgs:DS.avgs(),peakSkin:s.pkSk,imu,points:s.pts},null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="csav01_"+new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")+".json";a.click();
+}
+
+/* ══ SECTION TOGGLE ══ */
+function tog(id){const b=$(id+"Bd"),c=$(id+"Chev");const on=b.classList.toggle("on");if(c)c.textContent=on?"▲":"▼";}
+
+/* ══ WIRE UP ══ */
+$("connBtn").addEventListener("click",()=>BLE.isConn()?BLE.disconnect():BLE.connect());
+$("stbyBtn").addEventListener("click",()=>BLE.send("STANDBY"));
+$("wakeBtn").addEventListener("click",()=>{BLE.send("WAKE");setTimeout(()=>{if(BLE.isConn())setCS("connected");},300);});
+$("pwrBtn").addEventListener("click",()=>{
+  if(!confirm("¿POWEROFF? Deep sleep ~0.1mA. Despierta al agitar o timer 30s."))return;
+  BLE.send("POWEROFF");setTimeout(()=>BLE.disconnect(),400);});
+$("newSessBtn").addEventListener("click",newSess);
+$("expBtn").addEventListener("click",exportSess);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("modalOverlay").classList.remove("on");});
+
+/* ══ INIT ══ */
+setInterval(()=>{if(lastPkt)rSession();updateClock();},1000);
+updateClock();
+(()=>{const{hrmax,hrrest}=prof();$("oblaD").textContent="OBLA: "+Math.round(hrrest+0.85*(hrmax-hrrest))+" BPM";})();
+renderHist();setCS("disconnected");
+</script>
+</body>
+</html>
