@@ -1378,6 +1378,43 @@ button, input, textarea { font: inherit; }
 .source-badge.csav { background: rgba(255,111,77,0.12); color: var(--danger); }
 .source-badge.cl837 { background: rgba(107,99,255,0.12); color: var(--purple); }
 .source-badge.none { background: rgba(16,32,48,0.06); color: var(--ink-dim); }
+
+/* ── Mobile / Bluefy (≤ 600 px) ─────────────────────────────────────────── */
+@media (max-width: 600px) {
+  /* topbar: hide long subtitle, compact brand */
+  .brand-copy p { display: none; }
+  .brand-copy h1 { font-size: 0.9rem; }
+  .brand-mark { width: 38px; height: 38px; }
+
+  /* buttons & chips: meet 44 px iOS touch target */
+  .action-btn { min-height: 44px; padding: 10px 14px; font-size: 0.82rem; }
+  .state-chip { min-height: 36px; padding: 9px 12px; }
+  .section-link { min-height: 44px; padding: 12px 12px; font-size: 0.82rem; }
+
+  /* zone track: allow horizontal scroll so text is never crushed */
+  .zone-track {
+    overflow-x: auto;
+    grid-template-columns: repeat(5, minmax(72px, 1fr));
+    gap: 5px;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+  }
+  .zone-track::-webkit-scrollbar { display: none; }
+  .zone-segment { min-height: 54px; padding: 8px 6px; border-radius: 14px; }
+  .zone-segment small { font-size: 0.62rem; }
+  .zone-segment span  { font-size: 0.72rem; margin-top: 4px; }
+
+  /* ring slightly smaller so it fits below topbar */
+  .ring { width: 190px; height: 190px; }
+  .ring-value { font-size: 3.2rem; }
+
+  /* report hero: stack vertically */
+  .report-hero { flex-direction: column; }
+
+  /* charts shorter on phone */
+  .chart-panel canvas { height: 200px; }
+  .compact-canvas { height: 180px; }
+}
 </style>
 </head>
 <body>
