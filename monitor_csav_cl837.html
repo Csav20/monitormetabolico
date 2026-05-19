@@ -1,0 +1,5185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSAV Monitor — CSAV-01 &amp; CL837</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%23f4f7f7'/><circle cx='16' cy='16' r='7' fill='none' stroke='%23ff6f4d' stroke-width='2.4'/><circle cx='16' cy='16' r='2.5' fill='%23ff6f4d'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #eef4f3;
+  --bg-alt: #f8fbfb;
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-strong: rgba(255, 255, 255, 0.94);
+  --line: rgba(18, 35, 52, 0.12);
+  --line-strong: rgba(18, 35, 52, 0.2);
+  --ink: #102030;
+  --ink-soft: #5d7084;
+  --ink-dim: #8697a7;
+  --safe: #12b981;
+  --caution: #2f9cf4;
+  --alert: #ff9f43;
+  --danger: #ff6f4d;
+  --critical: #f2485b;
+  --purple: #6b63ff;
+  --teal: #0f9f98;
+  --shadow: 0 18px 42px rgba(17, 34, 50, 0.08);
+  --shadow-soft: 0 8px 24px rgba(17, 34, 50, 0.06);
+  --radius-xl: 30px;
+  --radius-lg: 24px;
+  --radius-md: 18px;
+  --radius-sm: 14px;
+  --display: "Space Grotesk", sans-serif;
+  --body: "Manrope", sans-serif;
+  --mono: "IBM Plex Mono", monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: var(--body);
+  background:
+    radial-gradient(circle at top left, rgba(255, 167, 125, 0.34), transparent 28%),
+    radial-gradient(circle at top right, rgba(78, 171, 255, 0.18), transparent 24%),
+    linear-gradient(180deg, #f5f8f8 0%, #eaf1f1 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.35) 0%, transparent 38%),
+    linear-gradient(240deg, rgba(255, 255, 255, 0.2) 0%, transparent 42%);
+  opacity: 0.7;
+}
+
+a { color: inherit; }
+button, input, textarea { font: inherit; }
+
+.app {
+  position: relative;
+  z-index: 1;
+  width: min(1320px, calc(100vw - 28px));
+  margin: 0 auto;
+  padding: 18px 0 40px;
+}
+
+.topbar {
+  position: sticky;
+  top: 12px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.7), transparent 35%),
+    linear-gradient(135deg, rgba(255, 111, 77, 0.22), rgba(47, 156, 244, 0.18));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.brand-orbit {
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(255, 111, 77, 0.84);
+  border-radius: 50%;
+  position: relative;
+}
+
+.brand-orbit::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 18px rgba(255, 111, 77, 0.45);
+}
+
+.brand-copy {
+  min-width: 0;
+}
+
+.brand-copy h1 {
+  font-family: var(--display);
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.brand-copy p {
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.state-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(18, 185, 129, 0.12);
+  color: var(--safe);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.state-chip::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 4px rgba(18, 185, 129, 0.12);
+}
+
+.state-chip[data-state="disconnected"] {
+  background: rgba(132, 146, 164, 0.14);
+  color: var(--ink-dim);
+}
+
+.state-chip[data-state="connecting"] {
+  background: rgba(47, 156, 244, 0.12);
+  color: var(--caution);
+}
+
+.state-chip[data-state="demo"] {
+  background: rgba(255, 159, 67, 0.14);
+  color: var(--alert);
+}
+
+.action-btn {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 10px 15px;
+  background: var(--surface-strong);
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
+}
+
+.action-btn:active {
+  transform: translateY(0);
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, rgba(255, 111, 77, 0.12), rgba(255, 255, 255, 0.9));
+  border-color: rgba(255, 111, 77, 0.24);
+  color: var(--danger);
+  font-weight: 800;
+}
+
+.action-btn.secondary {
+  border-color: rgba(16, 32, 48, 0.08);
+  color: var(--ink-soft);
+}
+
+.action-btn.demo.running {
+  background: rgba(255, 159, 67, 0.16);
+  border-color: rgba(255, 159, 67, 0.3);
+  color: var(--alert);
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: var(--shadow-soft);
+}
+
+.notice strong {
+  font-size: 0.92rem;
+}
+
+.notice p {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.notice .badge {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  background: rgba(18, 185, 129, 0.12);
+  color: var(--safe);
+}
+
+.notice.tone-safe .badge,
+.tone-safe {
+  background: rgba(18, 185, 129, 0.12);
+  color: var(--safe);
+}
+
+.notice.tone-caution .badge,
+.tone-caution {
+  background: rgba(47, 156, 244, 0.12);
+  color: var(--caution);
+}
+
+.notice.tone-alert .badge,
+.tone-alert {
+  background: rgba(255, 159, 67, 0.14);
+  color: var(--alert);
+}
+
+.notice.tone-danger .badge,
+.tone-danger {
+  background: rgba(255, 111, 77, 0.14);
+  color: var(--danger);
+}
+
+.notice.tone-critical .badge,
+.tone-critical {
+  background: rgba(242, 72, 91, 0.14);
+  color: var(--critical);
+}
+
+.dashboard {
+  display: grid;
+  gap: 18px;
+}
+
+.hero-grid,
+.content-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.hero-grid {
+  grid-template-columns: 1.3fr 1fr;
+}
+
+.content-grid.two-up {
+  grid-template-columns: 1.15fr 0.85fr;
+}
+
+.content-grid.equal {
+  grid-template-columns: 1fr 1fr;
+}
+
+.panel,
+.hero-card,
+.summary-card,
+.diagnostics {
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.hero-card,
+.summary-card,
+.panel {
+  padding: 22px;
+}
+
+.hero-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top right, rgba(255, 159, 67, 0.18), transparent 30%),
+    radial-gradient(circle at left center, rgba(47, 156, 244, 0.12), transparent 35%),
+    rgba(255, 255, 255, 0.8);
+}
+
+.hero-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -40px -60px auto;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 111, 77, 0.2), transparent 70%);
+}
+
+.eyebrow {
+  margin-bottom: 10px;
+  color: var(--ink-dim);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-head,
+.panel-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.hero-title h2,
+.panel-head h2 {
+  font-family: var(--display);
+  font-size: 1.45rem;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.hero-title p,
+.panel-head p {
+  margin-top: 6px;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.risk-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(18, 185, 129, 0.12);
+  color: var(--safe);
+  font-weight: 800;
+}
+
+.risk-pill::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ring-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.ring-shell {
+  display: grid;
+  place-items: center;
+}
+
+.ring {
+  --ring-angle: 72deg;
+  --ring-color: var(--safe);
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  padding: 16px;
+  background:
+    conic-gradient(from -90deg, var(--ring-color) 0deg var(--ring-angle), rgba(16, 32, 48, 0.08) var(--ring-angle) 360deg);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8),
+    0 18px 32px rgba(17, 34, 50, 0.08);
+}
+
+.ring-inner {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.84));
+  text-align: center;
+}
+
+.ring-kicker {
+  color: var(--ink-dim);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ring-value {
+  margin-top: 10px;
+  font-family: var(--display);
+  font-size: clamp(3.8rem, 9vw, 5.4rem);
+  line-height: 0.92;
+  letter-spacing: -0.08em;
+}
+
+.ring-unit {
+  margin-top: 6px;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 0.88rem;
+}
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.hero-stat {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(16, 32, 48, 0.06);
+}
+
+.hero-stat span,
+.metric-card .label,
+.mini-item .label,
+.stack-item .label,
+.diag-list dt,
+.zone-item small {
+  display: block;
+  color: var(--ink-dim);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hero-stat strong,
+.metric-card .value,
+.mini-item .value,
+.stack-item .value {
+  display: block;
+  margin-top: 7px;
+  font-family: var(--display);
+  font-size: 1.8rem;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.hero-stat p,
+.stack-item .sub,
+.metric-card .sub {
+  margin-top: 8px;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+}
+
+.coach-strip {
+  position: relative;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(16, 32, 48, 0.06);
+}
+
+.coach-strip strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 1rem;
+}
+
+.coach-strip p {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.zone-track {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.zone-segment {
+  min-height: 60px;
+  padding: 12px 10px;
+  border-radius: 18px;
+  border: 1px solid rgba(16, 32, 48, 0.06);
+  background: rgba(255, 255, 255, 0.6);
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.zone-segment.active {
+  transform: translateY(-2px);
+  border-color: currentColor;
+  box-shadow: 0 12px 24px rgba(17, 34, 50, 0.08);
+}
+
+.zone-segment span {
+  display: block;
+  margin-top: 5px;
+  font-weight: 800;
+}
+
+.summary-card {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.summary-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.summary-head h2 {
+  font-family: var(--display);
+  font-size: 1.3rem;
+  letter-spacing: -0.04em;
+}
+
+.summary-head p {
+  margin-top: 5px;
+  color: var(--ink-soft);
+}
+
+.session-clock {
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: rgba(107, 99, 255, 0.1);
+  color: var(--purple);
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metric-card {
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(16, 32, 48, 0.06);
+}
+
+.metric-card .value {
+  font-family: var(--display);
+  font-size: 2rem;
+}
+
+.metric-card .sub {
+  min-height: 2.6em;
+}
+
+.metric-card .value.mono,
+.stack-item .value.mono,
+.mini-item .value.mono {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  letter-spacing: -0.03em;
+}
+
+.section-nav {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.section-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.section-link {
+  flex: 0 0 auto;
+  padding: 11px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 32, 48, 0.08);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.chart-panel canvas {
+  display: block;
+  width: 100%;
+  height: 290px;
+  margin-top: 10px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(244, 247, 248, 0.92));
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 14px;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-legend span::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+
+.chart-legend span:nth-child(2)::before {
+  background: var(--caution);
+}
+
+.chart-legend span:nth-child(3)::before {
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(242, 72, 91, 0.55);
+}
+
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.mini-item {
+  padding: 15px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(16, 32, 48, 0.06);
+}
+
+.profile-panel,
+.report-panel,
+.zone-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.scout-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.player-card {
+  position: relative;
+  min-height: 360px;
+  padding: 18px;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.64), transparent 32%),
+    linear-gradient(165deg, #f7e7b4 0%, #e7c876 34%, #b77b22 100%);
+  color: #37240d;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 20px 34px rgba(183, 123, 34, 0.2);
+}
+
+.player-card::after {
+  content: "";
+  position: absolute;
+  right: -28px;
+  bottom: -34px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 70%);
+}
+
+.player-tier {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.player-overall {
+  font-family: var(--display);
+  font-size: 4rem;
+  line-height: 0.9;
+  letter-spacing: -0.08em;
+}
+
+.player-position {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.player-name {
+  margin-top: 18px;
+  font-family: var(--display);
+  font-size: 1.6rem;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.player-meta {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.player-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(55, 36, 13, 0.1);
+  font-family: var(--mono);
+  font-size: 0.76rem;
+}
+
+.player-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.player-stat {
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.player-stat b {
+  display: block;
+  font-family: var(--display);
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.player-stat span {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.user-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field span {
+  color: var(--ink-dim);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.field input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(16, 32, 48, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.field input:focus {
+  border-color: rgba(47, 156, 244, 0.38);
+  box-shadow: 0 0 0 4px rgba(47, 156, 244, 0.08);
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
+
+.user-help {
+  margin-top: 14px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.report-hero {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(107, 99, 255, 0.16), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.74), rgba(245, 248, 248, 0.94));
+  border: 1px solid rgba(16, 32, 48, 0.06);
+}
+
+.report-hero h3 {
+  font-family: var(--display);
+  font-size: 1.26rem;
+  letter-spacing: -0.04em;
+}
+
+.report-hero p {
+  margin-top: 8px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.report-score {
+  flex-shrink: 0;
+  min-width: 86px;
+  padding: 14px 10px;
+  border-radius: 24px;
+  text-align: center;
+  background: rgba(107, 99, 255, 0.1);
+  color: var(--purple);
+}
+
+.report-score strong {
+  display: block;
+  font-family: var(--display);
+  font-size: 2.5rem;
+  line-height: 0.9;
+  letter-spacing: -0.08em;
+}
+
+.report-score span {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.compact-canvas {
+  display: block;
+  width: 100%;
+  height: 250px;
+  margin-top: 10px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.68), rgba(244, 247, 248, 0.92));
+}
+
+.zone-now {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(16, 32, 48, 0.06);
+}
+
+.zone-now strong {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--display);
+  font-size: 1.35rem;
+  letter-spacing: -0.04em;
+}
+
+.zone-bars {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.zone-bar {
+  padding: 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(16, 32, 48, 0.06);
+}
+
+.zone-bar.active {
+  border-color: currentColor;
+  box-shadow: 0 14px 26px rgba(17, 34, 50, 0.08);
+}
+
+.zone-bar-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.zone-bar-head strong {
+  font-size: 0.95rem;
+}
+
+.zone-bar-track {
+  height: 10px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: rgba(16, 32, 48, 0.08);
+  overflow: hidden;
+}
+
+.zone-bar-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: currentColor;
+  transition: width 0.3s ease;
+}
+
+.zone-bar small {
+  display: block;
+  margin-top: 8px;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+
+.coach-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.coach-block {
+  padding: 18px;
+  border-radius: 24px;
+  background: rgba(18, 185, 129, 0.12);
+}
+
+.coach-block h3 {
+  font-family: var(--display);
+  font-size: 1.2rem;
+  letter-spacing: -0.04em;
+}
+
+.coach-block p {
+  margin-top: 8px;
+  color: currentColor;
+  line-height: 1.55;
+}
+
+.zone-list {
+  display: grid;
+  gap: 10px;
+}
+
+.zone-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(16, 32, 48, 0.06);
+}
+
+.zone-item.active {
+  border-color: currentColor;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.zone-item strong {
+  display: block;
+  font-size: 0.96rem;
+}
+
+.stack-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stack-item {
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(16, 32, 48, 0.06);
+}
+
+.stack-item .value {
+  font-size: 2rem;
+}
+
+.diag-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.diag-panel {
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(16, 32, 48, 0.06);
+}
+
+.diag-panel h3 {
+  margin-bottom: 14px;
+  font-family: var(--display);
+  font-size: 1.05rem;
+  letter-spacing: -0.03em;
+}
+
+.diag-list {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px 12px;
+  align-items: center;
+}
+
+.diag-list dd {
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.cmd-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.cmd-btn {
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(16, 32, 48, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+}
+
+.cmd-response,
+.ble-log {
+  min-height: 58px;
+  padding: 12px;
+  border-radius: 16px;
+  background: #f7fafb;
+  border: 1px solid rgba(16, 32, 48, 0.06);
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.ble-log {
+  max-height: 260px;
+  overflow: auto;
+}
+
+.ble-log-entry + .ble-log-entry {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(16, 32, 48, 0.06);
+}
+
+.ble-log time {
+  color: var(--ink-dim);
+  margin-right: 8px;
+}
+
+.diagnostics {
+  padding: 18px 20px 20px;
+}
+
+.diagnostics summary {
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--display);
+  font-size: 1.08rem;
+  font-weight: 700;
+}
+
+.diagnostics summary::-webkit-details-marker {
+  display: none;
+}
+
+.diagnostics summary::after {
+  content: "Ver";
+  margin-left: 10px;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.diagnostics[open] summary::after {
+  content: "Ocultar";
+}
+
+.empty-note {
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px dashed rgba(16, 32, 48, 0.14);
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.muted {
+  color: var(--ink-soft);
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+.right {
+  text-align: right;
+}
+
+@media (max-width: 1120px) {
+  .hero-grid,
+  .content-grid.two-up,
+  .content-grid.equal,
+  .diag-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .scout-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .mini-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .app {
+    width: min(100vw - 18px, 100%);
+    padding-top: 10px;
+  }
+
+  .topbar {
+    position: static;
+    border-radius: 28px;
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .top-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .notice {
+    flex-direction: column;
+    align-items: start;
+  }
+
+  .ring-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ring {
+    width: 210px;
+    height: 210px;
+  }
+
+  .hero-stats,
+  .metric-grid,
+  .stack-grid,
+  .user-form,
+  .report-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mini-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hero-card,
+  .summary-card,
+  .panel,
+  .diagnostics {
+    padding: 18px;
+  }
+
+  .chart-panel canvas {
+    height: 240px;
+  }
+}
+
+@media (max-width: 520px) {
+  .mini-grid,
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-link {
+    font-size: 0.8rem;
+  }
+}
+
+/* ── HRV ring ── */
+.hrv-ring-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0 6px;
+}
+.hrv-ring-outer {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 3px solid rgba(18,185,129,0.3);
+  box-shadow: 0 0 28px rgba(18,185,129,0.1), inset 0 0 24px rgba(18,185,129,0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.4s, box-shadow 0.4s;
+}
+.hrv-ring-value {
+  font-family: var(--display);
+  font-size: 3.2rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.06em;
+  color: var(--safe);
+  transition: color 0.4s;
+}
+.hrv-ring-label {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-top: 4px;
+}
+
+/* ── Lactate phase bar ── */
+.lac-phase-bar {
+  display: flex;
+  height: 32px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 16px;
+  box-shadow: inset 0 0 0 1px rgba(16,32,48,0.06);
+}
+.lac-phase-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition: flex 0.6s cubic-bezier(.4,0,.2,1), opacity 0.3s;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 0 8px;
+}
+.lac-phase-seg.lp1 { flex: 3; background: rgba(18,185,129,0.14); color: var(--safe); }
+.lac-phase-seg.lp2 { flex: 2; background: rgba(255,159,67,0.14); color: var(--alert); }
+.lac-phase-seg.lp3 { flex: 2; background: rgba(242,72,91,0.14);  color: var(--critical); }
+.lac-phase-seg.active { opacity: 1; }
+.lac-phase-seg:not(.active) { opacity: 0.35; }
+
+/* ── CL837 additions ── */
+.state-chip[data-state="cl837-connected"] {
+  background: rgba(107, 99, 255, 0.14);
+  color: var(--purple);
+}
+.state-chip[data-state="cl837-connected"]::before {
+  background: currentColor;
+  box-shadow: 0 0 0 4px rgba(107, 99, 255, 0.12);
+}
+.action-btn.cl837 {
+  background: linear-gradient(135deg, rgba(107, 99, 255, 0.1), rgba(255, 255, 255, 0.9));
+  border-color: rgba(107, 99, 255, 0.28);
+  color: var(--purple);
+  font-weight: 800;
+}
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.source-badge.csav { background: rgba(255,111,77,0.12); color: var(--danger); }
+.source-badge.cl837 { background: rgba(107,99,255,0.12); color: var(--purple); }
+.source-badge.none { background: rgba(16,32,48,0.06); color: var(--ink-dim); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-orbit"></div>
+      </div>
+      <div class="brand-copy">
+        <h1>CSAV Monitor — CSAV-01 &amp; CL837</h1>
+        <p>CSAV-01 (FFE1 JSON) · CL837 (Chileaf SDK) · Fusión de fuentes BLE</p>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <div class="state-chip" id="headerState" data-state="disconnected">CSAV off</div>
+      <div class="state-chip" id="cl837StateChip" data-state="disconnected" style="display:none">CL837 off</div>
+      <div class="state-chip" id="batChip" style="display:none;background:rgba(18,185,129,0.12);color:var(--safe)">🔋 --</div>
+      <button class="action-btn secondary demo" id="demoBtn" type="button">Demo</button>
+      <button class="action-btn secondary" id="clearBtn" type="button">Nueva sesión</button>
+      <button class="action-btn primary" id="connectBtn" type="button">Conectar BLE</button>
+      <button class="action-btn secondary" id="standbyBtn" type="button" disabled title="Apagar sensores, mantener BLE" style="border-color:rgba(255,159,67,0.35);color:var(--alert);display:none">⏸ Standby</button>
+      <button class="action-btn secondary" id="wakeBtn"    type="button" disabled title="Reactivar sensores" style="border-color:rgba(18,185,129,0.4);color:var(--safe);display:none">▶ Activar</button>
+      <button class="action-btn secondary" id="powerOffBtn" type="button" disabled title="Conecta CSAV-01 primero" style="border-color:rgba(242,72,91,0.28);color:var(--critical);display:none">⏻ Apagar</button>
+    </div>
+  </header>
+
+  <section class="notice tone-safe" id="noticeBanner">
+    <span class="badge" id="noticeBadge">LISTO</span>
+    <div>
+      <strong id="noticeTitle">Vista preparada</strong>
+      <p id="noticeText">Conecta tu dispositivo o activa Demo para ver la interfaz con datos en vivo.</p>
+    </div>
+  </section>
+
+  <main class="dashboard">
+    <section class="hero-grid" id="resumen">
+      <article class="hero-card">
+        <div class="eyebrow">Hoy</div>
+        <div class="hero-head">
+          <div class="hero-title">
+            <h2>Estado térmico actual</h2>
+            <p>Lectura rápida de estrés térmico, carga y respuesta fisiológica</p>
+          </div>
+          <div class="risk-pill tone-safe" id="riskPill">Esperando datos</div>
+        </div>
+
+        <div class="ring-layout">
+          <div class="ring-shell">
+            <div class="ring" id="thermalRing">
+              <div class="ring-inner">
+                <div class="ring-kicker">Temperatura de piel</div>
+                <div class="ring-value" id="heroSkin" data-placeholder="--">--</div>
+                <div class="ring-unit">°C</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <span>Humidex</span>
+              <strong id="heroHumidex" class="mono" data-placeholder="--">--</strong>
+              <p>Índice ambiental que empuja la percepción térmica.</p>
+            </div>
+            <div class="hero-stat">
+              <span>Gradiente piel-ambiente</span>
+              <strong id="heroGrad" class="mono" data-placeholder="--">--</strong>
+              <p>Cuánta capacidad real de disipación le queda al cuerpo.</p>
+            </div>
+            <div class="hero-stat">
+              <span>dT/dt</span>
+              <strong id="heroDtdt" class="mono" data-placeholder="--">--</strong>
+              <p>Velocidad de calentamiento en la última ventana.</p>
+            </div>
+            <div class="hero-stat">
+              <span>Sesión</span>
+              <strong id="heroSession" class="mono">00:00</strong>
+              <p id="heroSource">Sin contacto BLE. Chrome o Edge en `localhost` funciona mejor.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="coach-strip">
+          <strong id="heroMessageTitle">Lectura rápida</strong>
+          <p id="heroMessage">Tu panel principal mostrará primero el riesgo térmico, luego el contexto de carga y circulación para evitar perderte entre demasiados números.</p>
+        </div>
+
+        <div class="zone-track" id="zoneTrack">
+          <div class="zone-segment tone-safe" data-zone="safe">
+            <small>≤ 36.0 °C</small>
+            <span>Seguro</span>
+          </div>
+          <div class="zone-segment tone-caution" data-zone="caution">
+            <small>36.0–37.2</small>
+            <span>Precaución</span>
+          </div>
+          <div class="zone-segment tone-alert" data-zone="alert">
+            <small>37.2–38.0</small>
+            <span>Alerta</span>
+          </div>
+          <div class="zone-segment tone-danger" data-zone="danger">
+            <small>38.0–39.0</small>
+            <span>Peligro</span>
+          </div>
+          <div class="zone-segment tone-critical" data-zone="critical">
+            <small>&gt; 39.0 °C</small>
+            <span>Crítico</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="summary-card">
+        <div class="summary-head">
+          <div>
+            <h2>Mi día térmico</h2>
+            <p>Tarjetas rápidas al estilo dashboard deportivo</p>
+          </div>
+          <div class="session-clock" id="sessionClock">00:00</div>
+        </div>
+
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="label">Frecuencia cardíaca</div>
+            <div class="value mono" id="cardHr" data-placeholder="--">--</div>
+            <div class="sub" id="cardHrSub">El promedio validado del firmware vive aquí.</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">SpO₂ útil</div>
+            <div class="value mono" id="cardSpo2" data-placeholder="--">--</div>
+            <div class="sub" id="cardSpo2Sub">Prioriza dedo si `spo2_f` está disponible.</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Carga térmica</div>
+            <div class="value mono" id="cardCharge" data-placeholder="--">--</div>
+            <div class="sub" id="cardChargeSub">Integral local de calentamiento positivo sobre 36 °C.</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Contacto</div>
+            <div class="value mono" id="cardContact" data-placeholder="--">--</div>
+            <div class="sub" id="cardContactSub">Calidad de señal óptica y confianza de lectura.</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Temperatura ambiente</div>
+            <div class="value mono" id="cardTamb" data-placeholder="--">--</div>
+            <div class="sub" id="cardTambSub">Toma BME680 o ambiente MLX como respaldo.</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Perfusión superficial</div>
+            <div class="value mono" id="cardPiGrn" data-placeholder="--">--</div>
+            <div class="sub" id="cardPiGrnSub">PI verde para perfusión cutánea y disipación.</div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <nav class="section-nav">
+      <a class="section-link" href="#resumen">Resumen</a>
+      <a class="section-link" href="#usuario">Usuario</a>
+      <a class="section-link" href="#tendencias">Tendencias</a>
+      <a class="section-link" href="#graficos">FC y Zonas</a>
+      <a class="section-link" href="#entorno">Entorno</a>
+      <a class="section-link" href="#clinica">Sesión</a>
+      <a class="section-link" href="#hrv">HRV / SNA</a>
+      <a class="section-link" href="#lactato">Lactato</a>
+      <a class="section-link" href="#temperatura">Temperatura</a>
+      <a class="section-link" href="#informe">Informe</a>
+      <a class="section-link" href="#actividad" id="actividadNavLink" style="display:none">Actividad</a>
+      <a class="section-link" href="#movimiento">Movimiento IMU</a>
+      <a class="section-link" href="#diagnostico">Diagnóstico</a>
+    </nav>
+
+    <section class="content-grid two-up" id="usuario">
+      <article class="panel profile-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Usuario y scouting</h2>
+            <p>Perfil editable del atleta y tarjeta visual para leer el estado de un vistazo.</p>
+          </div>
+        </div>
+
+        <div class="scout-layout">
+          <aside class="player-card">
+            <div class="player-tier">CSAV PERFORMANCE</div>
+            <div class="player-overall" id="playerOverall">--</div>
+            <div class="player-position" id="playerSportLabel">PARA SPORT</div>
+            <div class="player-name" id="playerNameLabel">ATLETA</div>
+            <div class="player-meta" id="playerMetaLabel">TEAM · #01</div>
+            <div class="player-badge" id="playerBadge">Esperando sesión útil</div>
+            <div class="player-stats">
+              <div class="player-stat"><b id="attrTHM">--</b><span>THM</span></div>
+              <div class="player-stat"><b id="attrPLS">--</b><span>PLS</span></div>
+              <div class="player-stat"><b id="attrO2">--</b><span>O2</span></div>
+              <div class="player-stat"><b id="attrREC">--</b><span>REC</span></div>
+              <div class="player-stat"><b id="attrENV">--</b><span>ENV</span></div>
+              <div class="player-stat"><b id="attrSIG">--</b><span>SIG</span></div>
+            </div>
+          </aside>
+
+          <div>
+            <div class="user-form">
+              <label class="field">
+                <span>Nombre atleta</span>
+                <input id="userName" data-user="name" type="text" placeholder="Nombre del atleta">
+              </label>
+              <label class="field">
+                <span>Deporte</span>
+                <input id="userSport" data-user="sport" type="text" placeholder="Paraatletismo">
+              </label>
+              <label class="field">
+                <span>Equipo</span>
+                <input id="userTeam" data-user="team" type="text" placeholder="Team CSAV">
+              </label>
+              <label class="field">
+                <span>Dorsal</span>
+                <input id="userBib" data-user="bib" type="text" placeholder="#01">
+              </label>
+              <label class="field">
+                <span>Categoría / clase</span>
+                <input id="userCategory" data-user="category" type="text" placeholder="T54 / Ruta / Campo">
+              </label>
+              <label class="field">
+                <span>Edad</span>
+                <input id="userAge" data-user="age" type="number" min="10" max="99" step="1" placeholder="26">
+              </label>
+              <label class="field">
+                <span>FC reposo</span>
+                <input id="userHrRest" data-user="hrRest" type="number" min="30" max="120" step="1" placeholder="58">
+              </label>
+              <label class="field">
+                <span>FC máxima</span>
+                <input id="userHrMax" data-user="hrMax" type="number" min="120" max="240" step="1" placeholder="188">
+              </label>
+              <label class="field full">
+                <span>Nota técnica</span>
+                <input id="userNote" data-user="note" type="text" placeholder="Contexto clínico, adaptación al calor, observaciones">
+              </label>
+            </div>
+
+            <p class="user-help">Las zonas de entrenamiento se calculan con tu FC de reposo y FC máxima. El informe usa este perfil para etiquetar la sesión, calcular la zona actual y exportar un reporte tipo scouting.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel report-panel" id="informe">
+        <div class="panel-head">
+          <div>
+            <h2>Informe descargable</h2>
+            <p>Resumen estilo “match report” con métricas de sesión, perfil de atleta y datos exportables.</p>
+          </div>
+        </div>
+
+        <div class="report-hero">
+          <div>
+            <div class="eyebrow">Scouting Report</div>
+            <h3 id="reportTitle">Reporte listo para exportar</h3>
+            <p id="reportText">Conecta BLE o activa Demo para llenar el informe con datos en tiempo real y guardarlo como HTML, JSON o CSV.</p>
+          </div>
+          <div class="report-score">
+            <strong id="reportScore">--</strong>
+            <span>OVR</span>
+          </div>
+        </div>
+
+        <div class="report-actions">
+          <button class="action-btn primary" id="downloadReportBtn" type="button">Descargar informe HTML</button>
+          <button class="action-btn secondary" id="downloadJsonBtn" type="button">Exportar JSON</button>
+          <button class="action-btn secondary" id="downloadCsvBtn" type="button">Exportar CSV</button>
+        </div>
+
+        <div class="report-grid">
+          <div class="mini-item">
+            <div class="label">Atleta</div>
+            <div class="value mono" id="reportAthlete">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Zona actual</div>
+            <div class="value mono" id="reportZone">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Carga sesión</div>
+            <div class="value mono" id="reportLoad">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Estado señal</div>
+            <div class="value mono" id="reportSignal">--</div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="content-grid two-up" id="tendencias">
+      <article class="panel chart-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Tendencia térmica 60 s</h2>
+            <p>Lectura limpia; resumen rápido.</p>
+          </div>
+          <div class="right">
+            <div class="eyebrow">Temp piel vs ambiente</div>
+            <div class="mono muted" id="chartMeta">Sin muestras</div>
+          </div>
+        </div>
+        <canvas id="trendChart" width="900" height="300"></canvas>
+        <div class="chart-legend">
+          <span>Piel</span>
+          <span>Ambiente</span>
+          <span>Umbral 38.5 °C</span>
+        </div>
+
+        <div class="mini-grid">
+          <div class="mini-item">
+            <div class="label">Promedio 60 s</div>
+            <div class="value mono" id="avgSkin" data-placeholder="--">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Cambio 10 s</div>
+            <div class="value mono" id="trendSkin" data-placeholder="--">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Máx sesión</div>
+            <div class="value mono" id="peakSkin" data-placeholder="--">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Humidex promedio</div>
+            <div class="value mono" id="avgHumidex" data-placeholder="--">--</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel coach-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Coach térmico</h2>
+            <p>Polar Flow inspira la idea de feedback accionable y rápido.</p>
+          </div>
+        </div>
+
+        <div class="coach-block tone-safe" id="coachCard">
+          <h3 id="coachTitle">Esperando telemetría</h3>
+          <p id="coachText">Cuando llegue el flujo BLE, este panel priorizará la siguiente acción útil: seguir, bajar intensidad, enfriar o corregir contacto.</p>
+        </div>
+
+        <div class="zone-list" id="zoneList">
+          <div class="zone-item tone-safe" data-zone-item="safe">
+            <div>
+              <small>Zona 1</small>
+              <strong>Seguro</strong>
+            </div>
+            <span class="mono">&lt; 28</span>
+          </div>
+          <div class="zone-item tone-caution" data-zone-item="caution">
+            <div>
+              <small>Zona 2</small>
+              <strong>Precaución</strong>
+            </div>
+            <span class="mono">28-34</span>
+          </div>
+          <div class="zone-item tone-alert" data-zone-item="alert">
+            <div>
+              <small>Zona 3</small>
+              <strong>Alerta</strong>
+            </div>
+            <span class="mono">35-39</span>
+          </div>
+          <div class="zone-item tone-danger" data-zone-item="danger">
+            <div>
+              <small>Zona 4</small>
+              <strong>Peligro</strong>
+            </div>
+            <span class="mono">40-45</span>
+          </div>
+          <div class="zone-item tone-critical" data-zone-item="critical">
+            <div>
+              <small>Zona 5</small>
+              <strong>Crítico</strong>
+            </div>
+            <span class="mono">&gt; 45</span>
+          </div>
+        </div>
+
+        <div class="mini-grid">
+          <div class="mini-item">
+            <div class="label">Tiempo &gt; 38.5</div>
+            <div class="value mono" id="timeAbove385" data-placeholder="--">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Riesgo alto</div>
+            <div class="value mono" id="timeHighRisk" data-placeholder="--">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Gradiente mínimo</div>
+            <div class="value mono" id="minGrad" data-placeholder="--">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">dT/dt máx</div>
+            <div class="value mono" id="maxDtdt" data-placeholder="--">--</div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="content-grid equal" id="graficos">
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Frecuencia cardíaca en tiempo real</h2>
+            <p>Panel continuo de FC con retención del último valor útil y lectura por zona.</p>
+          </div>
+        </div>
+
+        <canvas id="hrChart" class="compact-canvas" width="900" height="260"></canvas>
+
+        <div class="mini-grid">
+          <div class="mini-item">
+            <div class="label">FC actual</div>
+            <div class="value mono" id="hrNow">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Zona FC</div>
+            <div class="value mono" id="hrZoneNow">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">FC media</div>
+            <div class="value mono" id="hrAvgLive">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">FC pico</div>
+            <div class="value mono" id="hrPeakLive">--</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel zone-panel" id="zonas">
+        <div class="panel-head">
+          <div>
+            <h2>Comparación con zonas de entrenamiento</h2>
+            <p>Distribución de tiempo por zonas calculadas desde el perfil del usuario.</p>
+          </div>
+        </div>
+
+        <div class="zone-now">
+          <div>
+            <div class="eyebrow">Zona actual</div>
+            <strong id="zoneNowLabel">--</strong>
+          </div>
+          <div class="mono right" id="zoneNowRange">--</div>
+        </div>
+
+        <div class="zone-bars">
+          <div class="zone-bar tone-safe" data-hr-zone="1">
+            <div class="zone-bar-head"><strong>Z1 · Recuperación</strong><span class="mono" id="zoneTime1">00:00</span></div>
+            <div class="zone-bar-track"><div class="zone-bar-fill" id="zoneFill1"></div></div>
+            <small id="zoneRange1">--</small>
+          </div>
+          <div class="zone-bar tone-caution" data-hr-zone="2">
+            <div class="zone-bar-head"><strong>Z2 · Base</strong><span class="mono" id="zoneTime2">00:00</span></div>
+            <div class="zone-bar-track"><div class="zone-bar-fill" id="zoneFill2"></div></div>
+            <small id="zoneRange2">--</small>
+          </div>
+          <div class="zone-bar tone-alert" data-hr-zone="3">
+            <div class="zone-bar-head"><strong>Z3 · Tempo</strong><span class="mono" id="zoneTime3">00:00</span></div>
+            <div class="zone-bar-track"><div class="zone-bar-fill" id="zoneFill3"></div></div>
+            <small id="zoneRange3">--</small>
+          </div>
+          <div class="zone-bar tone-danger" data-hr-zone="4">
+            <div class="zone-bar-head"><strong>Z4 · Umbral</strong><span class="mono" id="zoneTime4">00:00</span></div>
+            <div class="zone-bar-track"><div class="zone-bar-fill" id="zoneFill4"></div></div>
+            <small id="zoneRange4">--</small>
+          </div>
+          <div class="zone-bar tone-critical" data-hr-zone="5">
+            <div class="zone-bar-head"><strong>Z5 · Pico</strong><span class="mono" id="zoneTime5">00:00</span></div>
+            <div class="zone-bar-track"><div class="zone-bar-fill" id="zoneFill5"></div></div>
+            <small id="zoneRange5">--</small>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="content-grid equal" id="entorno">
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Entorno y confort</h2>
+            <p>Una lectura de entorno clara evita mezclar carga térmica con pura sensación subjetiva.</p>
+          </div>
+        </div>
+
+        <div class="stack-grid">
+          <div class="stack-item">
+            <div class="label">Temperatura ambiente</div>
+            <div class="value mono" id="envTemp" data-placeholder="--">--</div>
+            <div class="sub">°C tomados del BME680 o MLX ambiente.</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Humedad</div>
+            <div class="value mono" id="envHum" data-placeholder="--">--</div>
+            <div class="sub">La humedad empuja el humidex y reduce evaporación.</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Presión</div>
+            <div class="value mono" id="envPres" data-placeholder="--">--</div>
+            <div class="sub">hPa para contexto atmosférico y consistencia del sensor.</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Gas / VOC</div>
+            <div class="value mono" id="envGas" data-placeholder="--">--</div>
+            <div class="sub">kΩ como proxy de aire y ventilación relativa.</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Circulación y señal</h2>
+            <p>Aquí viven perfusión, contacto y la fuente fisiológica que conviene vigilar.</p>
+          </div>
+        </div>
+
+        <div class="stack-grid">
+          <div class="stack-item">
+            <div class="label">PI profundo IR</div>
+            <div class="value mono" id="sigPi" data-placeholder="--">--</div>
+            <div class="sub">Perfusión subcutánea y profundidad de la señal IR.</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">PI superficial verde</div>
+            <div class="value mono" id="sigPiGrn" data-placeholder="--">--</div>
+            <div class="sub">Perfusión cutánea superficial para disipación térmica.</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">RRI</div>
+            <div class="value mono" id="sigRri" data-placeholder="--">--</div>
+            <div class="sub">Intervalo inter-latido validado por el firmware.</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Fuente SpO₂</div>
+            <div class="value mono" id="spo2Source" data-placeholder="--">--</div>
+            <div class="sub">Dedo tiene prioridad cuando `spo2_f` es confiable.</div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="content-grid equal" id="clinica">
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Resumen de sesión</h2>
+            <p>Lectura de pico, promedios y tiempo útil por encima de umbrales.</p>
+          </div>
+        </div>
+
+        <div class="mini-grid">
+          <div class="mini-item">
+            <div class="label">Pico t. piel</div>
+            <div class="value mono" id="sumPeakSkin" data-placeholder="--">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Pico humidex</div>
+            <div class="value mono" id="sumPeakHumidex" data-placeholder="--">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">FC pico</div>
+            <div class="value mono" id="sumPeakHr" data-placeholder="--">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">SpO₂ promedio</div>
+            <div class="value mono" id="sumAvgSpo2" data-placeholder="--">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Carga máxima</div>
+            <div class="value mono" id="sumPeakCharge" data-placeholder="--">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Promedio t. piel</div>
+            <div class="value mono" id="sumAvgSkin" data-placeholder="--">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Promedio FC</div>
+            <div class="value mono" id="sumAvgHr" data-placeholder="--">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Muestras</div>
+            <div class="value mono" id="sumSamples" data-placeholder="--">--</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Pila de sensores y compatibilidad</h2>
+            <p>Tu nuevo HTML sigue pegado a `FFE0/FFE1/FFE3` y al payload real de `main.cpp`.</p>
+          </div>
+        </div>
+
+        <div class="stack-grid">
+          <div class="stack-item">
+            <div class="label">Dispositivo</div>
+            <div class="value mono" id="devName">CSAV-01</div>
+            <div class="sub" id="devMac">MAC pendiente de telemetría.</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Servicios BLE</div>
+            <div class="value mono">FFE0 / 180D / 1809 / 1822</div>
+            <div class="sub">Propietario + Heart Rate + Thermometer + Pulse Oximeter.</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Sensor stack</div>
+            <div class="value mono" id="sensorStack">MAX30102 · MLX90614 · BME680 · GY-91</div>
+            <div class="sub">MAX30102 (PPG) · MLX90614 (T piel IR) · BME680 (env) · GY-91 MPU-9250 (IMU)</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Estado clínico</div>
+            <div class="value mono" id="signalHealth" data-placeholder="--">--</div>
+            <div class="sub">Resumen simple para no perder tiempo en bruto cuando la lectura es estable.</div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ══ HRV / SNA ═══════════════════════════════════ -->
+    <section class="content-grid equal" id="hrv">
+      <article class="panel">
+        <div class="panel-head">
+          <div><h2>HRV / SNA</h2><p>Variabilidad de frecuencia cardíaca y estado del sistema nervioso autónomo.</p></div>
+          <div class="risk-pill tone-safe" id="hrvStatePill">Esperando RR</div>
+        </div>
+        <div class="hrv-ring-wrap">
+          <div class="hrv-ring-outer" id="hrvRingOuter">
+            <div class="hrv-ring-value" id="hrvRmssdBig">--</div>
+            <div class="hrv-ring-label">RMSSD ms</div>
+          </div>
+        </div>
+        <div class="metric-grid" style="margin-top:14px">
+          <div class="metric-card"><div class="label">RMSSD</div><div class="value mono" id="hrvRmssd">--</div><div class="sub">ms · variabilidad inter-latido</div></div>
+          <div class="metric-card"><div class="label">SDNN</div><div class="value mono" id="hrvSdnn">--</div><div class="sub">ms · desviación estándar RR</div></div>
+          <div class="metric-card"><div class="label">pNN50</div><div class="value mono" id="hrvPnn50">--</div><div class="sub">% · pares RR &gt; 50 ms</div></div>
+          <div class="metric-card"><div class="label">RR medio</div><div class="value mono" id="hrvRrMean">--</div><div class="sub">ms</div></div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <div><h2>Balance SNA</h2><p>Potencia espectral LF/HF, recovery y readiness.</p></div>
+        </div>
+        <div class="stack-grid">
+          <div class="stack-item tone-alert" id="lfBox">
+            <div class="label">LF · Simpático (0.04–0.15 Hz)</div>
+            <div class="value mono" id="hrvLf">--</div>
+            <div class="sub">ms²</div>
+          </div>
+          <div class="stack-item tone-safe" id="hfBox">
+            <div class="label">HF · Parasimpático (0.15–0.40 Hz)</div>
+            <div class="value mono" id="hrvHf">--</div>
+            <div class="sub">ms²</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">LF/HF Ratio</div>
+            <div class="value mono" id="hrvLfhf">--</div>
+            <div class="sub" id="hrvSymState">equilibrio simpático/parasimpático</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Recovery</div>
+            <div class="value mono" id="hrvRecovery">--</div>
+            <div class="sub">/100</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Readiness</div>
+            <div class="value mono" id="hrvReadiness">--</div>
+            <div class="sub">/100</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Estrés estimado</div>
+            <div class="value mono" id="hrvStress">--</div>
+          </div>
+        </div>
+        <div class="coach-strip" style="margin-top:14px">
+          <strong id="hrvStateTitle">Sin datos HRV</strong>
+          <p id="hrvRec">Conecta BLE o activa Demo para ver el estado del sistema nervioso autónomo.</p>
+        </div>
+        <div style="font-family:var(--mono);font-size:0.72rem;color:var(--ink-dim);margin-top:10px;padding:8px 12px;background:rgba(16,32,48,0.04);border-radius:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis" id="rrStrip">esperando intervalos RR…</div>
+      </article>
+    </section>
+
+    <!-- ══ LACTATO ══════════════════════════════════════ -->
+    <section class="content-grid equal" id="lactato">
+      <article class="panel">
+        <div class="panel-head">
+          <div><h2>Lactato estimado</h2><p>Modelo trifásico (Beaver 1985 · Heck 1985) desde FC y reserva cardíaca.</p></div>
+        </div>
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="label">Lactato</div>
+            <div class="value mono" id="lacVal">--</div>
+            <div class="sub" id="lacPhase">mmol/L · modelo FC</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">d[Lac]/dt</div>
+            <div class="value mono" id="lacD1">--</div>
+            <div class="sub">mmol/L·min⁻¹ · derivada</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">pH muscular est.</div>
+            <div class="value mono" id="lacPh">--</div>
+            <div class="sub">7.45 − [Lac]×0.04</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">OBLA · umbral aeróbico</div>
+            <div class="value mono" id="lacObla">--</div>
+            <div class="sub">BPM estimado (Sjodin 1981)</div>
+          </div>
+        </div>
+        <div class="lac-phase-bar" id="lacPhaseBar">
+          <div class="lac-phase-seg lp1">Fase I · Aeróbica &lt; 2 mmol/L</div>
+          <div class="lac-phase-seg lp2">Fase II · 2–4</div>
+          <div class="lac-phase-seg lp3">Fase III · &gt; 4</div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <div><h2>Estado metabólico</h2><p>Buffer ácido-base, tolerancia, índice de recuperación y sustrato.</p></div>
+        </div>
+        <div class="stack-grid">
+          <div class="stack-item">
+            <div class="label">Buffer ácido-base</div>
+            <div class="value mono" id="lacBuffer">--</div>
+            <div class="sub">mmol/L disponible</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Tolerancia lactato</div>
+            <div class="value mono" id="lacTol">--</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Índice recuperación</div>
+            <div class="value mono" id="lacRecIdx">--</div>
+            <div class="sub">(FC−FCrep)/FCrep</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Glucosa estimada</div>
+            <div class="value mono" id="lacGlu">--</div>
+            <div class="sub">mg/dL · proxy FC + lactato</div>
+          </div>
+        </div>
+        <div class="mini-grid" style="margin-top:14px">
+          <div class="mini-item"><div class="label">RER estimado</div><div class="value mono" id="lacRer">--</div></div>
+          <div class="mini-item"><div class="label">Sustrato dominante</div><div class="value mono" id="lacSustrato">--</div></div>
+          <div class="mini-item"><div class="label">ATP relativo</div><div class="value mono" id="lacAtp">--</div></div>
+          <div class="mini-item"><div class="label">PCr estimado</div><div class="value mono" id="lacPcr">--</div></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ══ TEMPERATURA EXTENDIDA ════════════════════════ -->
+    <section class="dashboard" id="temperatura" style="gap:14px">
+      <div class="hero-grid">
+        <article class="hero-card temp-ext-hero">
+          <div class="eyebrow">Temperatura corporal estimada</div>
+          <div class="ring-layout" style="grid-template-columns:1fr;gap:0">
+            <div>
+              <div style="font-family:var(--display);font-size:clamp(3rem,8vw,4.8rem);line-height:1;letter-spacing:-0.08em;margin-bottom:6px" id="tempBodyBig">--</div>
+              <div style="font-family:var(--mono);font-size:0.84rem;color:var(--ink-soft)">°C · señal dominante</div>
+              <div style="margin-top:10px;font-size:0.95rem;color:var(--ink-soft);line-height:1.5" id="tempKinetics">Esperando flujo térmico.</div>
+              <div style="height:6px;border-radius:999px;background:rgba(16,32,48,0.08);overflow:hidden;margin-top:14px">
+                <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#f59e0b,#fb7120,#f43f5e);transition:width .8s cubic-bezier(.4,0,.2,1)" id="tempHeatBar"></div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="hero-card">
+          <div class="eyebrow">Proyección térmica · 5 min</div>
+          <div style="font-family:var(--display);font-size:clamp(3rem,8vw,4.8rem);line-height:1;letter-spacing:-0.08em;margin-bottom:6px" id="tempProjBig">--</div>
+          <div style="font-family:var(--mono);font-size:0.84rem;color:var(--ink-soft)">°C proyectados · fatiga por calor</div>
+          <div style="margin-top:10px;font-size:0.95rem;color:var(--ink-soft);line-height:1.5" id="tempProjMeta">Sin proyección todavía.</div>
+          <div style="height:6px;border-radius:999px;background:rgba(16,32,48,0.08);overflow:hidden;margin-top:14px">
+            <div style="height:100%;border-radius:999px;transition:width .8s cubic-bezier(.4,0,.2,1)" id="tempRiskBar"></div>
+          </div>
+        </article>
+      </div>
+
+      <section class="content-grid equal">
+        <article class="panel">
+          <div class="panel-head"><div><h2>Chips térmicos</h2><p>Lecturas consolidadas de sensores y métricas derivadas.</p></div></div>
+          <div class="metric-grid">
+            <div class="metric-card"><div class="label">Temp. Muñeca / Piel</div><div class="value mono" id="tempSkinChip">--</div><div class="sub">°C · MLX90614 / CL837</div></div>
+            <div class="metric-card"><div class="label">Temp. Ambiente</div><div class="value mono" id="tempEnvChip">--</div><div class="sub">°C · BME680 / CL837</div></div>
+            <div class="metric-card"><div class="label">Gradiente</div><div class="value mono" id="tempGradChip">--</div><div class="sub">°C corporal vs cutánea</div></div>
+            <div class="metric-card"><div class="label">Carga Térmica</div><div class="value mono" id="tempLoadChip">--</div><div class="sub">/100 · memoria acumulada</div></div>
+            <div class="metric-card"><div class="label">Riesgo Térmico</div><div class="value mono" id="tempRiskChip">--</div><div class="sub">/100 · riesgo actual</div></div>
+            <div class="metric-card"><div class="label">Fatiga Térmica</div><div class="value mono" id="tempFatigueChip">--</div><div class="sub">/100 · proyectada 5 min</div></div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head"><div><h2>Cinética térmica</h2><p>Tendencia de temperatura corporal, cutánea y ambiente.</p></div></div>
+          <canvas id="tempKineticsChart" width="900" height="280" style="display:block;width:100%;height:280px;margin-top:10px;border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.68),rgba(244,247,248,.92))"></canvas>
+          <div class="chart-legend" style="margin-top:12px">
+            <span style="display:inline-flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:#fb7120;display:inline-block"></span>Corporal</span>
+            <span style="display:inline-flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Muñeca/Piel</span>
+            <span style="display:inline-flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:#2f9cf4;display:inline-block"></span>Ambiente</span>
+          </div>
+        </article>
+      </section>
+
+      <article class="panel" style="padding:22px">
+        <div class="panel-head"><div><h2>Lectura térmica integrada</h2><p>Interpretación unificada de cinética, riesgo y fatiga proyectada.</p></div></div>
+        <div class="coach-strip" style="margin-top:0">
+          <strong id="tempRecoTitle">Sin datos térmicos</strong>
+          <p id="tempRecoCopy">La sección mostrará la cinética térmica, la deriva por calor y el posible impacto sobre fatiga, perfusión y entrega periférica de oxígeno.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="content-grid equal" id="actividad" style="display:none">
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Actividad CL837</h2>
+            <p>Podómetro y velocidad del smartband Chileaf. Solo disponible con CL837 conectado.</p>
+          </div>
+          <span class="source-badge none" id="activitySourceBadge">sin datos</span>
+        </div>
+        <div class="stack-grid">
+          <div class="stack-item">
+            <div class="label">Pasos</div>
+            <div class="value mono" id="cl8Steps">--</div>
+            <div class="sub">acumulados en sesión</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Distancia</div>
+            <div class="value mono" id="cl8Dist">--</div>
+            <div class="sub">metros / km</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Calorías</div>
+            <div class="value mono" id="cl8Cal">--</div>
+            <div class="sub">kcal estimadas</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Velocidad</div>
+            <div class="value mono" id="cl8Speed">--</div>
+            <div class="sub">km/h</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Ritmo</div>
+            <div class="value mono" id="cl8Pace">--</div>
+            <div class="sub">min/km</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Cadencia</div>
+            <div class="value mono" id="cl8Cadence">--</div>
+            <div class="sub">pasos/min (RSC)</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Sensores CL837</h2>
+            <p>Temperatura 3 canales, SpO₂, postura y batería del smartband.</p>
+          </div>
+        </div>
+        <div class="stack-grid">
+          <div class="stack-item">
+            <div class="label">T. Muñeca</div>
+            <div class="value mono" id="cl8Twrist">--</div>
+            <div class="sub">°C · proxy t_skin CL837</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">T. Ambiente</div>
+            <div class="value mono" id="cl8Tenv">--</div>
+            <div class="sub">°C · sensor CL837</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">T. Corporal</div>
+            <div class="value mono" id="cl8Tbody">--</div>
+            <div class="sub">°C estimada</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">SpO₂</div>
+            <div class="value mono" id="cl8Spo2">--</div>
+            <div class="sub" id="cl8SpO2sub">muñeca CL837</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">PI / Perfusión</div>
+            <div class="value mono" id="cl8Pi">--</div>
+            <div class="sub">índice de perfusión</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Contacto / Postura</div>
+            <div class="value mono" id="cl8Contact">--</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Batería</div>
+            <div class="value mono" id="cl8BatVal">--</div>
+            <div class="sub">% CL837</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Fuente activa</div>
+            <div class="value mono" id="activeSource">--</div>
+            <div class="sub">proveedor de t_skin / HR</div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ══ MOVIMIENTO GY-91 / MPU-9250 ════════════════════════════════════ -->
+    <section class="content-grid equal" id="movimiento">
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Movimiento · GY-91</h2>
+            <p style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <span>Posición del sensor:</span>
+              <span style="display:inline-flex;gap:0;border-radius:8px;overflow:hidden;border:1px solid var(--line-strong)">
+                <button id="placementWristBtn" type="button" onclick="UI.setPlacement('wrist')"
+                  style="padding:4px 14px;font-size:0.82rem;font-weight:600;border:none;cursor:pointer;background:var(--teal);color:#fff">
+                  Muñeca / Brazo
+                </button>
+                <button id="placementChestBtn" type="button" onclick="UI.setPlacement('chest')"
+                  style="padding:4px 14px;font-size:0.82rem;font-weight:600;border:none;cursor:pointer;background:var(--surface-strong);color:var(--ink-soft)">
+                  Pecho
+                </button>
+              </span>
+            </p>
+          </div>
+          <span class="source-badge none" id="imuSourceBadge">sin IMU</span>
+        </div>
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="label">Velocidad</div>
+            <div class="value mono" id="imuVelMs">--</div>
+            <div class="sub" id="imuVelKmh">m/s desde cadencia de zancadas</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Saltos sesión</div>
+            <div class="value mono" id="imuJumps">--</div>
+            <div class="sub">detectados por fase de vuelo (&gt; 80 ms)</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Zancadas / Pasos</div>
+            <div class="value mono" id="imuStrides">--</div>
+            <div class="sub">picos de aceleración vertical</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Estabilización</div>
+            <div class="value mono" id="imuStab">--</div>
+            <div class="sub">100 = quieto · 0 = máxima vibración</div>
+          </div>
+        </div>
+        <!-- barra de estabilización -->
+        <div style="height:8px;border-radius:999px;background:rgba(16,32,48,0.08);overflow:hidden;margin-top:14px">
+          <div id="imuStabBar" style="height:100%;border-radius:999px;background:var(--safe);transition:width .4s ease,background .4s ease;width:0%"></div>
+        </div>
+        <!-- cadencia y velocidad pico de sesión -->
+        <div class="mini-grid" style="margin-top:14px">
+          <div class="mini-item">
+            <div class="label">Cadencia actual</div>
+            <div class="value mono" id="imuCadence">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Vel. pico sesión</div>
+            <div class="value mono" id="imuVelPeak">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Dist. estimada</div>
+            <div class="value mono" id="imuDist">--</div>
+          </div>
+          <div class="mini-item">
+            <div class="label">Estado IMU</div>
+            <div class="value mono" id="imuStatus">--</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Acelerómetro raw · orientación</h2>
+            <p>Datos crudos del MPU-9250 y ángulos de orientación (roll/pitch/yaw).</p>
+          </div>
+        </div>
+        <div class="stack-grid">
+          <div class="stack-item">
+            <div class="label">Accel X</div>
+            <div class="value mono" id="imuAx">--</div>
+            <div class="sub">m/s²</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Accel Y</div>
+            <div class="value mono" id="imuAy">--</div>
+            <div class="sub">m/s²</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">Accel Z</div>
+            <div class="value mono" id="imuAz">--</div>
+            <div class="sub">m/s²</div>
+          </div>
+          <div class="stack-item">
+            <div class="label">|A| total</div>
+            <div class="value mono" id="imuAmag">--</div>
+            <div class="sub">g · 1.0 = reposo</div>
+          </div>
+        </div>
+        <!-- wake-on-shake indicator -->
+        <div class="coach-strip" style="margin-top:14px">
+          <strong id="imuWakeTitle">Wake-on-shake</strong>
+          <p id="imuWakeCopy">Agitar el dispositivo lo despertará del deep sleep. Además, el timer de 30s permite que el HTML auto-reconecte cuando el dispositivo vuelva a anunciar.</p>
+        </div>
+        <!-- standby -->
+        <div style="margin-top:14px;display:flex;gap:10px">
+          <button class="action-btn" id="standbyBtnPanel" type="button"
+            style="flex:1;border-color:rgba(255,159,67,0.35);color:var(--alert);font-weight:700"
+            disabled>
+            ⏸ Standby (BLE activo)
+          </button>
+          <button class="action-btn" id="wakeBtnPanel" type="button"
+            style="flex:1;border-color:rgba(18,185,129,0.4);color:var(--safe);font-weight:700;display:none"
+            disabled>
+            ▶ Activar sensores
+          </button>
+        </div>
+        <p style="margin-top:6px;font-size:0.82rem;color:var(--ink-soft)">
+          Standby apaga los sensores pero mantiene BLE activo. Usar ▶ Activar para retomar.
+        </p>
+        <!-- power off -->
+        <div style="margin-top:10px">
+          <button class="action-btn" id="powerOffBtnPanel" type="button"
+            style="width:100%;border-color:rgba(242,72,91,0.28);color:var(--critical);font-weight:800"
+            disabled>
+            ⏻ Deep sleep — Apagar dispositivo
+          </button>
+          <p style="margin-top:8px;font-size:0.82rem;color:var(--ink-soft)">
+            Mínimo consumo (~0.1 mA). Despierta al agitar o cada 30s para reconexión BLE.
+          </p>
+        </div>
+      </article>
+    </section>
+
+    <details class="diagnostics" id="historialSection" open>
+      <summary>Historial de sesiones</summary>
+      <div style="padding:16px 20px">
+        <ul id="sessionHistoryList" style="list-style:none;padding:0;margin:0;font-size:0.88rem;color:var(--ink)">
+          <li style="color:var(--ink-dim)">Sin sesiones guardadas.</li>
+        </ul>
+        <button type="button" onclick="(()=>{ if(!confirm('¿Borrar historial completo?')) return; localStorage.removeItem('csav_sessions'); UI.renderSessionHistory?.(); })()"
+          style="margin-top:10px;padding:4px 12px;font-size:0.8rem;border:1px solid var(--line-strong);border-radius:8px;background:none;cursor:pointer;color:var(--ink-soft)">
+          Borrar historial
+        </button>
+      </div>
+    </details>
+
+    <details class="diagnostics" id="diagnostico">
+      <summary>Diagnóstico BLE y datos crudos</summary>
+      <div class="diag-grid">
+        <div class="diag-panel">
+          <h3>Dispositivo y control</h3>
+          <dl class="diag-list">
+            <dt>Estado</dt><dd id="diagState">Desconectado</dd>
+            <dt>Nombre</dt><dd id="diagName">--</dd>
+            <dt>MAC</dt><dd id="diagMac">--</dd>
+            <dt>Pkt/s</dt><dd id="diagPps">0</dd>
+            <dt>Total</dt><dd id="diagTotal">0</dd>
+            <dt>Contacto</dt><dd id="diagContact">--</dd>
+          </dl>
+          <div class="cmd-row">
+            <button class="cmd-btn" type="button" data-cmd="PING">PING</button>
+            <button class="cmd-btn" type="button" data-cmd="STATUS">STATUS</button>
+            <button class="cmd-btn" type="button" data-cmd="RESET">RESET</button>
+            <button class="cmd-btn" type="button" data-cmd="I2C_SCAN" title="Escanear bus I2C y listar dispositivos">I2C SCAN</button>
+          </div>
+          <div class="cmd-response" id="cmdResponse">Sin respuesta aún.</div>
+        </div>
+
+        <div class="diag-panel">
+          <h3>Canales y fisiología</h3>
+          <dl class="diag-list">
+            <dt>IR</dt><dd id="rawIr">--</dd>
+            <dt>Red</dt><dd id="rawRed">--</dd>
+            <dt>Green</dt><dd id="rawGreen">--</dd>
+            <dt>PI IR</dt><dd id="rawPi">--</dd>
+            <dt>PI Grn</dt><dd id="rawPiGrn">--</dd>
+            <dt>RRI</dt><dd id="rawRri">--</dd>
+            <dt>HR raw</dt><dd id="rawHr">--</dd>
+            <dt>SpO₂ muñeca</dt><dd id="rawSpo2">--</dd>
+            <dt>SpO₂ dedo</dt><dd id="rawSpo2F">--</dd>
+          </dl>
+        </div>
+
+        <div class="diag-panel">
+          <h3>Log BLE</h3>
+          <div class="ble-log" id="bleLog">
+            <div class="empty-note">Aún no entran paquetes. Aquí aparecerán los últimos 10 JSON recibidos por `FFE1`.</div>
+          </div>
+        </div>
+      </div>
+    </details>
+  </main>
+</div>
+
+<script>
+const Utils = (() => {
+  function $(id) { return document.getElementById(id); }
+  function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+  function fmt(value, digits = 1) {
+    return Number.isFinite(value) ? value.toFixed(digits) : "--";
+  }
+  function fmtInt(value) {
+    return Number.isFinite(value) ? Math.round(value).toString() : "--";
+  }
+  function fmtTime(seconds) {
+    const safe = Math.max(0, Math.floor(seconds || 0));
+    const mm = String(Math.floor(safe / 60)).padStart(2, "0");
+    const ss = String(safe % 60).padStart(2, "0");
+    return mm + ":" + ss;
+  }
+  function mean(values) {
+    const valid = values.filter(Number.isFinite);
+    if (!valid.length) return NaN;
+    return valid.reduce((sum, value) => sum + value, 0) / valid.length;
+  }
+  function lastValid(values) {
+    for (let i = values.length - 1; i >= 0; i--) {
+      if (Number.isFinite(values[i])) return values[i];
+    }
+    return NaN;
+  }
+  function rangeDelta(values, windowSize) {
+    const valid = values.filter(Number.isFinite);
+    if (valid.length < windowSize * 2) return NaN;
+    const tail = valid.slice(-windowSize);
+    const prev = valid.slice(-(windowSize * 2), -windowSize);
+    return mean(tail) - mean(prev);
+  }
+  function toneClass(base, tone) {
+    base.classList.remove("tone-safe", "tone-caution", "tone-alert", "tone-danger", "tone-critical");
+    if (tone) base.classList.add("tone-" + tone);
+  }
+  function slug(value) {
+    return String(value || "csav")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  }
+  function downloadFile(filename, content, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  return { $, clamp, fmt, fmtInt, fmtTime, mean, lastValid, rangeDelta, toneClass, slug, downloadFile };
+})();
+
+const RiskModel = (() => {
+  const zones = [
+    { key: "safe", label: "Seguro", hex: "#12b981", cutoff: "≤ 36.0 °C" },
+    { key: "caution", label: "Precaución", hex: "#2f9cf4", cutoff: "36.0–37.2" },
+    { key: "alert", label: "Alerta", hex: "#ff9f43", cutoff: "37.2–38.0" },
+    { key: "danger", label: "Peligro", hex: "#ff6f4d", cutoff: "38.0–39.0" },
+    { key: "critical", label: "Crítico", hex: "#f2485b", cutoff: "> 39.0 °C" }
+  ];
+
+  function zoneIndexByMetrics(pkt) {
+    const tSkin = pkt.t_skin || 0;
+    const dtdt = pkt.dt_dt || 0;
+
+    if (tSkin >= 39.0 || dtdt > 0.15) return 4;
+    if (tSkin >= 38.0 || dtdt > 0.10) return 3;
+    if (tSkin >= 37.2 || dtdt > 0.06) return 2;
+    if (tSkin >= 36.0 || dtdt > 0.03) return 1;
+    return 0;
+  }
+
+  function guidance(pkt, zone) {
+    if (pkt.sleep) {
+      return {
+        title: "Sensores en reposo",
+        text: "El firmware entró en modo sleep por falta de contacto. La vista mantiene la última sesión visible y espera nuevo contacto.",
+        notice: "Wear detection activo. Revisa posición del sensor para reactivar lectura."
+      };
+    }
+
+    if (!pkt.mlx_ok || (pkt.t_skin || 0) <= 10) {
+      return {
+        title: "Sin temperatura fiable",
+        text: "No conviene tomar decisiones térmicas todavía. Ajusta el MLX o espera la próxima lectura válida.",
+        notice: "La interfaz sigue viva, pero sin `t_skin` el riesgo principal no es confiable."
+      };
+    }
+
+    if (pkt.contact_quality === "NONE") {
+      return {
+        title: "Corrige el contacto",
+        text: "Hay contexto térmico, pero la señal óptica todavía no es suficiente para confiar en FC, RRI o PI.",
+        notice: "Ajusta la presión del wearable antes de interpretar circulación o SpO₂."
+      };
+    }
+
+    if (zone.key === "critical") {
+      return {
+        title: "Detener y enfriar ya",
+        text: "El sistema ve una combinación de ambiente, temperatura o tasa de calentamiento propia de un evento crítico.",
+        notice: "Pasar a sombra o enfriamiento activo y pedir evaluación clínica inmediata."
+      };
+    }
+
+    if (zone.key === "danger") {
+      return {
+        title: "Peligro real de sobrecarga térmica",
+        text: "La sesión debería bajar intensidad o pausar. Si el gradiente sigue cayendo, la disipación se está agotando.",
+        notice: "Ideal para enfriamiento breve, hidratación y vigilancia continua."
+      };
+    }
+
+    if (zone.key === "alert") {
+      if ((pkt.grad || 0) < 5) {
+        return {
+          title: "Alerta con disipación pobre",
+          text: "El atleta sigue calentándose y la diferencia piel-ambiente ya es baja. La convección no está ayudando.",
+          notice: "Reduce exposición, mejora ventilación y corta la progresión antes de entrar en peligro."
+        };
+      }
+      return {
+        title: "Carga subiendo, aún controlable",
+        text: "Hay estrés térmico, pero todavía se puede gobernar si vigilas tendencia, contacto y ritmo de calentamiento.",
+        notice: "Mantén monitoreo continuo y revisa dT/dt cada pocos segundos."
+      };
+    }
+
+    if (zone.key === "caution") {
+      return {
+        title: "Monitorización activa",
+        text: "Todo sigue relativamente estable, pero ya existe presión ambiental o térmica suficiente para perder margen.",
+        notice: "Buena zona para decidir antes, no después."
+      };
+    }
+
+    if ((pkt.pi_grn || 0) > 0 && (pkt.grad || 0) > 8) {
+      return {
+        title: "Disipación favorable",
+        text: "La piel tiene margen térmico y perfusión superficial suficiente para seguir disipando calor con comodidad.",
+        notice: "Buen momento para registrar baseline y comparar más adelante."
+      };
+    }
+
+    return {
+      title: "Sesión estable",
+      text: "La vista principal está tranquila: riesgo bajo, temperatura contenida y deriva térmica sin aceleración preocupante.",
+      notice: "Listo para usar como dashboard base durante actividad o recuperación."
+    };
+  }
+
+  function resolve(pkt) {
+    const zone = zones[zoneIndexByMetrics(pkt)];
+    const summary = guidance(pkt, zone);
+    return {
+      ...zone,
+      percent: ((zones.indexOf(zone) + 1) / zones.length) * 100,
+      ...summary
+    };
+  }
+
+  return { zones, resolve };
+})();
+
+const UserProfile = (() => {
+  const STORAGE_KEY = "csav_user_profile_v2";
+  const defaults = {
+    name: "Atleta CSAV",
+    sport: "Paraatletismo",
+    team: "Team CSAV",
+    bib: "#01",
+    category: "T54",
+    age: 26,
+    hrRest: 58,
+    hrMax: 188,
+    note: ""
+  };
+
+  let profile = { ...defaults };
+  const listeners = [];
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      profile = {
+        ...defaults,
+        ...parsed,
+        age: safeNumber(parsed.age, defaults.age),
+        hrRest: safeNumber(parsed.hrRest, defaults.hrRest),
+        hrMax: safeNumber(parsed.hrMax, defaults.hrMax)
+      };
+    } catch (error) {
+      console.warn("User profile load error", error);
+    }
+  }
+
+  function safeNumber(value, fallback) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+    } catch (error) {
+      console.warn("User profile save error", error);
+    }
+  }
+
+  function syncInputs() {
+    Object.entries(profile).forEach(([key, value]) => {
+      const input = document.querySelector("[data-user=\"" + key + "\"]");
+      if (input) input.value = value;
+    });
+  }
+
+  function notify() {
+    listeners.forEach(listener => listener(get()));
+  }
+
+  function handleInput(event) {
+    const { user } = event.target.dataset;
+    if (!user) return;
+    profile[user] = ["age", "hrRest", "hrMax"].includes(user)
+      ? safeNumber(event.target.value, defaults[user])
+      : event.target.value || defaults[user];
+    save();
+    notify();
+  }
+
+  function bind() {
+    load();
+    syncInputs();
+    document.querySelectorAll("[data-user]").forEach(input => {
+      input.addEventListener("input", handleInput);
+    });
+    notify();
+  }
+
+  function onChange(listener) {
+    listeners.push(listener);
+  }
+
+  function get() {
+    return {
+      ...profile,
+      bib: String(profile.bib || defaults.bib).trim() || defaults.bib
+    };
+  }
+
+  function thresholds() {
+    const hrRest = safeNumber(profile.hrRest, defaults.hrRest);
+    const hrMax = Math.max(hrRest + 20, safeNumber(profile.hrMax, defaults.hrMax));
+    const reserve = Math.max(20, hrMax - hrRest);
+    const fractions = [
+      [0.50, 0.60],
+      [0.60, 0.70],
+      [0.70, 0.80],
+      [0.80, 0.90],
+      [0.90, 1.00]
+    ];
+
+    return fractions.map(([from, to], index) => ({
+      zone: index + 1,
+      min: Math.round(hrRest + reserve * from),
+      max: Math.round(hrRest + reserve * to)
+    }));
+  }
+
+  function zoneForHr(hr) {
+    if (!Number.isFinite(hr) || hr <= 0) return null;
+    const bands = thresholds();
+    const match = bands.find((band, index) => hr >= band.min && (index === bands.length - 1 ? hr <= band.max + 20 : hr < band.max));
+    return match ? match.zone : hr < bands[0].min ? 1 : 5;
+  }
+
+  function zoneRangeLabel(zone) {
+    const band = thresholds().find(item => item.zone === zone);
+    if (!band) return "--";
+    return band.min + " - " + band.max + " BPM";
+  }
+
+  return { bind, onChange, get, thresholds, zoneForHr, zoneRangeLabel };
+})();
+
+const DataStore = (() => {
+  const WIN = 60;
+
+  function createState() {
+    return {
+      sessionStart: null,
+      lastSkin: null,
+      chargeLocal: 0,
+      maxDtdt: -Infinity,
+      minGrad: Infinity,
+      peakSkin: -Infinity,
+      peakHumidex: -Infinity,
+      peakHr: -Infinity,
+      peakCharge: -Infinity,
+      sumSkin: 0,
+      countSkin: 0,
+      sumHumidex: 0,
+      countHumidex: 0,
+      sumHr: 0,
+      countHr: 0,
+      sumSpo2: 0,
+      countSpo2: 0,
+      timeAbove385: 0,
+      timeHighRisk: 0,
+      packetCount: 0,
+      device: "CSAV-01",
+      mac: "",
+      points: [],
+      lastValid: {
+        tSkin: NaN,
+        tAmb: NaN,
+        hum: NaN,
+        pres: NaN,
+        gas: NaN,
+        humidex: NaN,
+        grad: NaN,
+        dt_dt: NaN,
+        hr: NaN,
+        spo2: NaN,
+        charge: NaN,
+        pi: NaN,
+        piGrn: NaN,
+        rri: NaN
+      },
+      riskSeconds: {
+        safe: 0,
+        caution: 0,
+        alert: 0,
+        danger: 0,
+        critical: 0
+      },
+      hrZoneSeconds: {
+        z1: 0,
+        z2: 0,
+        z3: 0,
+        z4: 0,
+        z5: 0
+      },
+      rawLog: []
+    };
+  }
+
+  let state = createState();
+
+  function computeHumidex(tAmb, hum) {
+    if (!Number.isFinite(tAmb) || !Number.isFinite(hum) || tAmb <= 0 || hum <= 0) return NaN;
+    const vapor = 6.105 * Math.exp(25.22 * (tAmb / (273.16 + tAmb)) - 5.31) * (hum / 100);
+    return Math.max(tAmb, +(tAmb + 0.5555 * (vapor - 10)).toFixed(1));
+  }
+
+  function pushRawLog(text) {
+    const time = new Date().toLocaleTimeString("es-CL", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+    state.rawLog.unshift({ time, text });
+    if (state.rawLog.length > 10) state.rawLog.pop();
+  }
+
+  function isMetric(value) {
+    return Number.isFinite(value);
+  }
+
+  function remember(key, value) {
+    if (isMetric(value)) state.lastValid[key] = value;
+  }
+
+  function pick(current, key) {
+    return isMetric(current) ? current : state.lastValid[key];
+  }
+
+  function push(pkt) {
+    if (!state.sessionStart) state.sessionStart = Date.now();
+
+    const tSkin = Number.isFinite(pkt.t_skin) && pkt.t_skin > 10 ? pkt.t_skin : NaN;
+    const tAmb = Number.isFinite(pkt.t_amb) && pkt.t_amb > 0 ? pkt.t_amb : NaN;
+    const humidex = Number.isFinite(pkt.humidex) && pkt.humidex > 0 ? pkt.humidex : computeHumidex(tAmb, pkt.hum);
+    const grad = Number.isFinite(tSkin) && Number.isFinite(tAmb) ? +(tSkin - tAmb).toFixed(1) : NaN;
+    const dt_dt = Number.isFinite(tSkin) && Number.isFinite(state.lastSkin)
+      ? +(((tSkin - state.lastSkin) * 60).toFixed(3))
+      : Number.isFinite(tSkin) ? 0 : NaN;
+
+    if (Number.isFinite(tSkin)) state.lastSkin = tSkin;
+    if (dt_dt > 0 && Number.isFinite(tSkin) && tSkin > 36) state.chargeLocal += dt_dt / 60;
+
+    const spo2Best = Number.isFinite(pkt.spo2_f) && pkt.spo2_f >= 80
+      ? pkt.spo2_f
+      : Number.isFinite(pkt.spo2) && pkt.spo2 >= 80
+        ? pkt.spo2
+        : NaN;
+    const spo2Source = Number.isFinite(pkt.spo2_f) && pkt.spo2_f >= 80
+      ? "Dedo"
+      : Number.isFinite(pkt.spo2) && pkt.spo2 >= 80
+        ? "Muñeca"
+        : "Sin lectura";
+    const hrDisplay = pkt.hr_valid ? Math.round(pkt.hr_avg || pkt.hr || 0) : 0;
+    const hrZone = hrDisplay > 0 ? UserProfile.zoneForHr(hrDisplay) : null;
+
+    remember("tSkin", tSkin);
+    remember("tAmb", tAmb);
+    remember("hum", Number.isFinite(pkt.hum) && pkt.hum > 0 ? pkt.hum : NaN);
+    remember("pres", Number.isFinite(pkt.pres) && pkt.pres > 0 ? pkt.pres : NaN);
+    remember("gas", Number.isFinite(pkt.gas) && pkt.gas > 0 ? pkt.gas : NaN);
+    remember("humidex", humidex);
+    remember("grad", grad);
+    remember("dt_dt", dt_dt);
+    remember("charge", state.chargeLocal);
+    remember("pi", Number.isFinite(pkt.pi) && pkt.pi > 0 ? pkt.pi : NaN);
+    remember("piGrn", Number.isFinite(pkt.pi_grn) && pkt.pi_grn > 0 ? pkt.pi_grn : NaN);
+    remember("rri", pkt.rri > 0 ? pkt.rri : NaN);
+    remember("hr", hrDisplay > 0 ? hrDisplay : NaN);
+    remember("spo2", spo2Best);
+
+    const display = {
+      tSkin: pick(tSkin, "tSkin"),
+      tAmb: pick(tAmb, "tAmb"),
+      hum: pick(Number.isFinite(pkt.hum) && pkt.hum > 0 ? pkt.hum : NaN, "hum"),
+      pres: pick(Number.isFinite(pkt.pres) && pkt.pres > 0 ? pkt.pres : NaN, "pres"),
+      gas: pick(Number.isFinite(pkt.gas) && pkt.gas > 0 ? pkt.gas : NaN, "gas"),
+      humidex: pick(humidex, "humidex"),
+      grad: pick(grad, "grad"),
+      dt_dt: pick(dt_dt, "dt_dt"),
+      hr: pick(hrDisplay > 0 ? hrDisplay : NaN, "hr"),
+      spo2: pick(spo2Best, "spo2"),
+      charge: pick(state.chargeLocal, "charge"),
+      pi: pick(Number.isFinite(pkt.pi) && pkt.pi > 0 ? pkt.pi : NaN, "pi"),
+      piGrn: pick(Number.isFinite(pkt.pi_grn) && pkt.pi_grn > 0 ? pkt.pi_grn : NaN, "piGrn"),
+      rri: pick(pkt.rri > 0 ? pkt.rri : NaN, "rri")
+    };
+
+    pkt.t_skin = tSkin;
+    pkt.t_amb = tAmb;
+    pkt.humidex = humidex;
+    pkt.grad = grad;
+    pkt.dt_dt = dt_dt;
+    pkt.charge = +state.chargeLocal.toFixed(2);
+    pkt.spo2_best = spo2Best;
+    pkt.spo2_source = spo2Source;
+    pkt.hr_display = hrDisplay;
+    pkt.hr_zone = hrZone;
+    pkt.display = display;
+    pkt.stale = {
+      tSkin: !isMetric(tSkin) && isMetric(display.tSkin),
+      tAmb: !isMetric(tAmb) && isMetric(display.tAmb),
+      humidex: !isMetric(humidex) && isMetric(display.humidex),
+      grad: !isMetric(grad) && isMetric(display.grad),
+      dt_dt: !isMetric(dt_dt) && isMetric(display.dt_dt),
+      hr: !(hrDisplay > 0) && isMetric(display.hr),
+      spo2: !isMetric(spo2Best) && isMetric(display.spo2),
+      pi: !(Number.isFinite(pkt.pi) && pkt.pi > 0) && isMetric(display.pi),
+      piGrn: !(Number.isFinite(pkt.pi_grn) && pkt.pi_grn > 0) && isMetric(display.piGrn)
+    };
+    pkt.contact_quality = pkt.contact_quality || pkt.quality || (pkt.contact ? "GOOD" : "NONE");
+    pkt.contact = typeof pkt.contact === "boolean" ? pkt.contact : pkt.contact_quality !== "NONE";
+    pkt.risk = RiskModel.resolve({
+      ...pkt,
+      t_skin: display.tSkin,
+      humidex: display.humidex,
+      dt_dt: display.dt_dt,
+      grad: display.grad
+    });
+
+    state.packetCount += 1;
+    if (pkt.device) state.device = pkt.device;
+    if (pkt.mac) state.mac = pkt.mac;
+
+    if (Number.isFinite(tSkin)) {
+      state.sumSkin += tSkin;
+      state.countSkin += 1;
+      state.peakSkin = Math.max(state.peakSkin, tSkin);
+      if (tSkin > 38.5) state.timeAbove385 += 1;
+    }
+
+    if (Number.isFinite(humidex)) {
+      state.sumHumidex += humidex;
+      state.countHumidex += 1;
+      state.peakHumidex = Math.max(state.peakHumidex, humidex);
+    }
+
+    if (hrDisplay > 0) {
+      state.sumHr += hrDisplay;
+      state.countHr += 1;
+      state.peakHr = Math.max(state.peakHr, hrDisplay);
+      state.hrZoneSeconds["z" + hrZone] += 1;
+    }
+
+    if (Number.isFinite(spo2Best)) {
+      state.sumSpo2 += spo2Best;
+      state.countSpo2 += 1;
+    }
+
+    if (Number.isFinite(grad)) state.minGrad = Math.min(state.minGrad, grad);
+    if (Number.isFinite(dt_dt)) state.maxDtdt = Math.max(state.maxDtdt, dt_dt);
+    state.peakCharge = Math.max(state.peakCharge, pkt.charge);
+    state.riskSeconds[pkt.risk.key] += 1;
+    if (pkt.risk.key === "danger" || pkt.risk.key === "critical") state.timeHighRisk += 1;
+
+    state.points.push({
+      tSkin,
+      tAmb,
+      humidex,
+      grad,
+      dt_dt,
+      hr: hrDisplay > 0 ? hrDisplay : NaN,
+      spo2: spo2Best,
+      charge: pkt.charge
+    });
+    if (state.points.length > WIN) state.points.shift();
+
+    return pkt;
+  }
+
+  function reset() {
+    state = createState();
+  }
+
+  function getState() {
+    return state;
+  }
+
+  function getSeries(key) {
+    return state.points.map(point => point[key]);
+  }
+
+  function getElapsedSeconds() {
+    if (!state.sessionStart) return 0;
+    return Math.floor((Date.now() - state.sessionStart) / 1000);
+  }
+
+  function getAverages() {
+    return {
+      skin: state.countSkin ? state.sumSkin / state.countSkin : NaN,
+      humidex: state.countHumidex ? state.sumHumidex / state.countHumidex : NaN,
+      hr: state.countHr ? state.sumHr / state.countHr : NaN,
+      spo2: state.countSpo2 ? state.sumSpo2 / state.countSpo2 : NaN
+    };
+  }
+
+  function recomputeHrZones() {
+    state.hrZoneSeconds = { z1: 0, z2: 0, z3: 0, z4: 0, z5: 0 };
+    state.points.forEach(point => {
+      if (!Number.isFinite(point.hr)) return;
+      const zone = UserProfile.zoneForHr(point.hr);
+      if (zone) state.hrZoneSeconds["z" + zone] += 1;
+    });
+  }
+
+  return { computeHumidex, push, pushRawLog, reset, getState, getSeries, getElapsedSeconds, getAverages, recomputeHrZones };
+})();
+
+const BleManager = (() => {
+  const SVC = "0000ffe0-0000-1000-8000-00805f9b34fb";
+  const C_FFE1 = "0000ffe1-0000-1000-8000-00805f9b34fb";
+  const C_FFE3 = "0000ffe3-0000-1000-8000-00805f9b34fb";
+
+  let bleDevice = null;
+  let charFFE1 = null;
+  let charFFE3 = null;
+  let connected = false;
+  let connecting = false;
+  let rxBuf = "";
+  let pktWindow = [];
+  let totalPkts = 0;
+  let autoReconnect = false;
+  let reconnectTimer = null;
+  let manualDisconnect = false;
+  let reconnectAttempts = 0;
+  const MAX_RECONNECT_ATTEMPTS = 6;
+
+  function getSupportInfo() {
+    const origin = location.origin === "null" ? location.href : location.origin;
+    const hasBluetooth = !!navigator.bluetooth;
+    const secure = !!window.isSecureContext;
+
+    if (!hasBluetooth) {
+      return {
+        ok: false,
+        title: "Web Bluetooth no disponible",
+        text: "Usa Chrome o Edge con soporte Web Bluetooth. Origen actual: " + origin
+      };
+    }
+
+    if (!secure) {
+      return {
+        ok: true,
+        warning: true,
+        title: "Contexto no ideal para BLE",
+        text: "El origen actual no parece seguro. Igual se intentará abrir el selector BLE y el navegador decidirá si lo permite. Origen actual: " + origin
+      };
+    }
+
+    return {
+      ok: true,
+      title: "BLE disponible",
+      text: "El navegador permite abrir el selector BLE."
+    };
+  }
+
+  function normalizePacket(raw) {
+    const pkt = { ...raw };
+    const contactRaw = raw?.contact;
+
+    if (pkt.t_skin == null && raw?.t_wrist != null) pkt.t_skin = raw.t_wrist;
+    if (pkt.t_amb == null && raw?.t_ambient != null) pkt.t_amb = raw.t_ambient;
+
+    if (typeof contactRaw === "string") {
+      pkt.contact_quality = contactRaw;
+      pkt.contact = contactRaw !== "NONE";
+    } else {
+      pkt.contact = !!contactRaw;
+      pkt.contact_quality = raw?.quality || (pkt.contact ? "GOOD" : "NONE");
+    }
+
+    if (pkt.hr == null) pkt.hr = 0;
+    if (pkt.hr_avg == null) pkt.hr_avg = 0;
+    if (pkt.hr_valid == null) pkt.hr_valid = false;
+    if (pkt.ir == null) pkt.ir = 0;
+    if (pkt.red == null) pkt.red = 0;
+    if (pkt.green == null) pkt.green = 0;
+    if (pkt.spo2 == null) pkt.spo2 = 0;
+    if (pkt.spo2_f == null) pkt.spo2_f = 0;
+    if (pkt.rri == null) pkt.rri = 0;
+    if (pkt.pi == null) pkt.pi = 0;
+    if (pkt.pi_grn == null) pkt.pi_grn = 0;
+    if (pkt.hum == null) pkt.hum = 0;
+    if (pkt.pres == null) pkt.pres = 0;
+    if (pkt.gas == null) pkt.gas = 0;
+    if (pkt.max_ok == null) pkt.max_ok = false;
+    if (pkt.mlx_ok == null) pkt.mlx_ok = (pkt.t_skin ?? 0) > 0;
+    if (pkt.env_ok == null) pkt.env_ok = (pkt.hum ?? 0) > 0;
+    if (pkt.ble_conn == null) pkt.ble_conn = connected;
+    if (pkt.device == null) pkt.device = bleDevice?.name || "CSAV-01";
+
+    return pkt;
+  }
+
+  function onDisconnect() {
+    connected = false;
+    charFFE1 = null;
+    charFFE3 = null;
+    rxBuf = "";
+    UI.setConnectionState("disconnected");
+    clearTimeout(reconnectTimer);
+
+    if (manualDisconnect) {
+      manualDisconnect = false;
+      autoReconnect = false;
+      reconnectAttempts = 0;
+      return;
+    }
+
+    autoReconnect = true;
+    reconnectAttempts = 0;
+    reconnectTimer = setTimeout(reconnect, 2000);
+  }
+
+  async function reconnect() {
+    if (!bleDevice || connected || connecting) return;
+    connecting = true;
+    UI.setConnectionState("connecting");
+
+    try {
+      const server = await bleDevice.gatt.connect();
+      const service = await server.getPrimaryService(SVC);
+      charFFE1 = await service.getCharacteristic(C_FFE1);
+      charFFE3 = await service.getCharacteristic(C_FFE3);
+
+      await charFFE1.startNotifications();
+      charFFE1.addEventListener("characteristicvaluechanged", onFFE1);
+      await charFFE3.startNotifications();
+      charFFE3.addEventListener("characteristicvaluechanged", onFFE3);
+
+      connected = true;
+      autoReconnect = false;
+      reconnectAttempts = 0;
+      UI.setConnectionState("connected", bleDevice.name || "CSAV-01");
+    } catch (error) {
+      reconnectAttempts++;
+      const outOfRange = error?.message?.includes("no longer in range") || error?.message?.includes("Bluetooth Device");
+      const giveUp = outOfRange || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS;
+      if (autoReconnect && !giveUp) {
+        UI.setConnectionState("disconnected");
+        reconnectTimer = setTimeout(reconnect, 3000);
+      } else {
+        autoReconnect = false;
+        reconnectAttempts = 0;
+        UI.setConnectionState("disconnected");
+      }
+      console.warn("BLE reconnect error", error);
+    } finally {
+      connecting = false;
+    }
+  }
+
+  function onFFE1(event) {
+    rxBuf += new TextDecoder().decode(event.target.value);
+
+    let depth = 0;
+    let start = -1;
+
+    for (let index = 0; index < rxBuf.length; index++) {
+      const char = rxBuf[index];
+
+      if (char === "{") {
+        if (depth === 0) start = index;
+        depth += 1;
+      } else if (char === "}") {
+        depth -= 1;
+        if (depth === 0 && start !== -1) {
+          const jsonStr = rxBuf.slice(start, index + 1);
+          rxBuf = rxBuf.slice(index + 1);
+          index = -1;
+          start = -1;
+
+          try {
+            const pkt = DataStore.push(normalizePacket(JSON.parse(jsonStr)));
+            totalPkts += 1;
+            const now = Date.now();
+            pktWindow.push(now);
+            pktWindow = pktWindow.filter(stamp => now - stamp < 1000);
+            DataStore.pushRawLog(jsonStr);
+            UI.render(pkt);
+            UI.renderLog(DataStore.getState().rawLog);
+          } catch (error) {
+            console.warn("FFE1 parse error", error, jsonStr.slice(0, 80));
+          }
+        }
+      }
+    }
+
+    if (rxBuf.length > 4096) rxBuf = "";
+  }
+
+  function onFFE3(event) {
+    const text = new TextDecoder().decode(event.target.value);
+    UI.showCommandResponse(text);
+  }
+
+  async function connectToDevice(device) {
+    if (connected || connecting) return;
+    connecting = true;
+    const support = getSupportInfo();
+    try {
+      bleDevice = device;
+      UI.setConnectionState("connecting");
+      UI.showNotice(
+        support.warning ? "caution" : "safe",
+        support.warning ? support.title : "CSAV-01 seleccionado",
+        support.warning ? support.text : "Emparejando y habilitando las características `FFE1/FFE3`."
+      );
+      manualDisconnect = false;
+      bleDevice.addEventListener("gattserverdisconnected", onDisconnect);
+      const server = await bleDevice.gatt.connect();
+      const service = await server.getPrimaryService(SVC);
+      charFFE1 = await service.getCharacteristic(C_FFE1);
+      charFFE3 = await service.getCharacteristic(C_FFE3);
+      await charFFE1.startNotifications();
+      charFFE1.addEventListener("characteristicvaluechanged", onFFE1);
+      await charFFE3.startNotifications();
+      charFFE3.addEventListener("characteristicvaluechanged", onFFE3);
+      connected = true;
+      UI.setConnectionState("connected", bleDevice.name || "CSAV-01");
+      UI.showNotice("safe", "BLE conectado", "La nueva vista ya está lista para resumir tu telemetría en tiempo real.");
+    } catch (error) {
+      if (error?.name === "SecurityError") {
+        UI.showNotice("danger", "Permiso BLE rechazado", "El navegador bloqueó Web Bluetooth. Revisa permisos y abre la página en `localhost` o HTTPS.");
+      } else {
+        UI.showNotice("danger", "Error de conexión BLE", (error && error.message) ? error.message : "No se pudo abrir o completar la conexión BLE.");
+      }
+      console.warn("BLE connect error", error);
+      UI.setConnectionState("disconnected");
+    } finally {
+      connecting = false;
+    }
+  }
+
+  async function connect() {
+    const support = getSupportInfo();
+    if (!support.ok) { UI.showNotice("caution", support.title, support.text); return; }
+    if (connected || connecting) return;
+    try {
+      const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: [SVC] });
+      await connectToDevice(device);
+    } catch (error) {
+      if (error?.name === "NotFoundError") {
+        UI.showNotice("caution", "Selección cancelada", "El selector BLE se abrió, pero no se eligió ningún dispositivo.");
+      } else {
+        UI.showNotice("danger", "Error BLE", (error && error.message) ? error.message : "No se pudo abrir el selector BLE.");
+      }
+    }
+  }
+
+  async function disconnect() {
+    manualDisconnect = true;
+    autoReconnect = false;
+    clearTimeout(reconnectTimer);
+    if (bleDevice && bleDevice.gatt.connected) {
+      await bleDevice.gatt.disconnect();
+    }
+    connected = false;
+    UI.setConnectionState("disconnected");
+  }
+
+  async function sendCommand(cmd) {
+    if (!connected || !charFFE3) {
+      UI.showCommandResponse('{"status":"ERROR","msg":"No conectado"}');
+      return;
+    }
+    try {
+      await charFFE3.writeValue(new TextEncoder().encode(cmd));
+      UI.showCommandResponse("→ Comando enviado: " + cmd + " (esperando respuesta)");
+    } catch (error) {
+      UI.showCommandResponse('{"status":"ERROR","msg":"' + error.message + '"}');
+    }
+  }
+
+  function isConnected() {
+    return connected;
+  }
+
+  function getPps() {
+    return pktWindow.length;
+  }
+
+  function getTotalPkts() {
+    return totalPkts;
+  }
+
+  return { connect, connectToDevice, disconnect, sendCommand, isConnected, getPps, getTotalPkts, getSupportInfo };
+})();
+
+/* ══════════════════════════════════════════════════════
+   CL837 BLE Manager — Chileaf SDK (WebBluetooth)
+   Sensores: HR+RR · Temp 3ch · SpO₂+PI · Podómetro · RSC
+══════════════════════════════════════════════════════ */
+const CL837Manager = (() => {
+  const UUID_CUSTOM_SVC   = 'aae28f00-71b5-42a1-8c3c-f9cf6ac969d0';
+  const UUID_CUSTOM_NOTIF = 'aae28f01-71b5-42a1-8c3c-f9cf6ac969d0';
+  const UUID_CUSTOM_WRITE = 'aae28f02-71b5-42a1-8c3c-f9cf6ac969d0';
+  const UUID_HR_SVC       = 'heart_rate';
+  const UUID_HR_CHAR      = 'heart_rate_measurement';
+  const UUID_RSC_SVC      = '00001814-0000-1000-8000-00805f9b34fb';
+  const UUID_RSC_CHAR     = '00002a53-0000-1000-8000-00805f9b34fb';
+  const UUID_BAT_SVC      = 'battery_service';
+  const UUID_BAT_CHAR     = 'battery_level';
+  const POLL_EVERY_MS     = 5000;
+  const SPO2_STALE_MS     = 8500;
+
+  let _device = null, _server = null, _writeChar = null;
+  let _connected = false;
+  let _prevDistCm = 0, _prevTs = Date.now();
+  let _pollInterval = null, _utcInterval = null;
+  let _authenticated = false, _pollBusy = false;
+  let _lastCommandSent = 0;
+  let _lastHr = 0, _lastRri = 0;
+
+  const activity = { steps: 0, distCm: 0, kcal: 0, speedKmh: 0, paceStr: "--", cadence: 0 };
+  const sensors  = { temp: { env: NaN, wrist: NaN, body: NaN }, spo2: null, bat: null };
+
+  function _checksum(hexStr) {
+    let sum = 0;
+    for (let i = 0; i < hexStr.length; i += 2)
+      sum = (sum + parseInt(hexStr.slice(i, i + 2), 16)) & 0xFF;
+    const sss = (0x100 - sum) & 0xFF;
+    const SSS = (sss ^ 0x3A) & 0xFF;
+    return hexStr + SSS.toString(16).padStart(2, '0');
+  }
+
+  function _buildAuth() {
+    const cc  = (Math.floor(Math.random() * 254) + 1) & 0xFF;
+    const key = [0x43,0x68,0x69,0x6c,0x65,0x61,0x66,0x5f,0x32,0x30,0x31,0x39,0x31,0x31];
+    const encoded = key.map(b => (b ^ cc).toString(16).padStart(2, '0')).join('');
+    const a = (cc ^ 0xD5).toString(16).padStart(2, '0');
+    return _checksum('ff2813' + encoded + a);
+  }
+
+  const CMD_TEMP      = _checksum('ff0438');
+  const CMD_SPO2_ON   = _checksum('ff053701');
+  const CMD_SPORT_NOW = _checksum('ff0415');
+
+  function _hexToBytes(hex) {
+    const arr = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < hex.length; i += 2) arr[i / 2] = parseInt(hex.slice(i, i + 2), 16);
+    return arr;
+  }
+  function _delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function _send(hexStr) {
+    if (!_writeChar || !_connected) return;
+    try {
+      const elapsed = Date.now() - _lastCommandSent;
+      if (elapsed < 170) await _delay(170 - elapsed);
+      await _writeChar.writeValue(_hexToBytes(hexStr));
+      _lastCommandSent = Date.now();
+    } catch (_) {}
+  }
+
+  function _parseSportPacket(data) {
+    const buf = new Uint8Array(data);
+    if (buf.length < 3) return;
+    switch (buf[2]) {
+      case 0x15: _parseActivity(buf); break;
+      case 0x37: _parseSpO2(buf);    break;
+      case 0x38: _parseTemp(buf);    break;
+      case 0x04: _authenticated = true; break;
+    }
+  }
+
+  function _parseActivity(buf) {
+    const hex = Array.from(buf).map(b => b.toString(16).padStart(2, '0')).join('');
+    if (hex.length < 24) return;
+    const steps  = parseInt(hex.slice(6,  12), 16);
+    const distCm = parseInt(hex.slice(12, 18), 16);
+    const calX10 = parseInt(hex.slice(18, 24), 16);
+    const now    = Date.now();
+    const dtSec  = (now - _prevTs) / 1000;
+    const ddCm   = distCm - _prevDistCm;
+    _prevDistCm  = distCm; _prevTs = now;
+    const speedMs  = dtSec >= 1 && ddCm > 0 ? (ddCm / 100) / dtSec : 0;
+    const speedKmh = +(speedMs * 3.6).toFixed(1);
+    const paceSecKm = speedMs > 0.3 ? Math.round(1000 / speedMs) : 0;
+    const paceStr = speedMs > 0.3
+      ? Math.floor(paceSecKm / 60) + ':' + String(paceSecKm % 60).padStart(2, '0') + ' /km'
+      : '--';
+    activity.steps    = steps;
+    activity.distCm   = distCm;
+    activity.kcal     = calX10 / 10;
+    activity.speedKmh = speedKmh;
+    activity.paceStr  = paceStr;
+    UI.renderCl837Activity();
+    _pushToDataStore();
+  }
+
+  function _parseSpO2(buf) {
+    if (buf[3] === 0x00) return;
+    const spo2 = buf[4];
+    if (!spo2 || spo2 > 100) return;
+    const pi      = buf[6];
+    const onwrist = buf[7] === 1;
+    const posture = buf[5] === 1;
+    sensors.spo2  = { value: spo2, pi, onwrist, posture, ts: Date.now() };
+    UI.renderCl837Activity();
+    _pushToDataStore();
+  }
+
+  function _parseTemp(buf) {
+    if (buf.length < 9) return;
+    const env   = ((buf[3] << 8) | buf[4]) / 10;
+    const wrist = ((buf[5] << 8) | buf[6]) / 10;
+    const body  = ((buf[7] << 8) | buf[8]) / 10;
+    if (env < 5 || env > 60) return;
+    sensors.temp = { env, wrist, body };
+    UI.renderCl837Activity();
+    _pushToDataStore();
+  }
+
+  function _parseRSC(data) {
+    const dv = new DataView(data instanceof ArrayBuffer ? data : data.buffer);
+    if (dv.byteLength < 4) return;
+    const cadence = dv.getUint8(3);
+    activity.cadence = cadence;
+    UI.renderCl837Activity();
+  }
+
+  function _pushToDataStore() {
+    if (BleManager.isConnected()) return;
+    const pkt = {
+      device: _device?.name || "CL837",
+      source: "cl837",
+      t_skin: Number.isFinite(sensors.temp.wrist) && sensors.temp.wrist > 10 ? sensors.temp.wrist : undefined,
+      t_amb:  Number.isFinite(sensors.temp.env)   && sensors.temp.env   > 0  ? sensors.temp.env   : undefined,
+      hum: NaN, pres: NaN, gas: NaN,
+      hr:      _lastHr, hr_avg: _lastHr, hr_valid: _lastHr > 30,
+      spo2:    sensors.spo2?.value || NaN, spo2_f: NaN,
+      pi:      sensors.spo2 ? (sensors.spo2.pi / 15) * 3 : NaN,
+      pi_grn:  NaN,
+      rri:     _lastRri,
+      contact: sensors.spo2?.onwrist ?? false,
+      contact_quality: sensors.spo2?.onwrist ? "GOOD" : "NONE",
+      mlx_ok:  Number.isFinite(sensors.temp.wrist) && sensors.temp.wrist > 10,
+      env_ok:  Number.isFinite(sensors.temp.env)   && sensors.temp.env   > 0,
+      max_ok:  true, ble_conn: true
+    };
+    if (!pkt.t_skin && !pkt.hr_valid) return;
+    DataStore.push(pkt);
+    UI.renderFromCl837(pkt);
+  }
+
+  async function _pollCycle() {
+    if (_pollBusy || !_connected || !_writeChar) return;
+    _pollBusy = true;
+    try {
+      await _send(CMD_SPORT_NOW);
+      await _delay(220);
+      await _send(CMD_TEMP);
+      await _delay(220);
+      const stale = !sensors.spo2 || (Date.now() - sensors.spo2.ts) > SPO2_STALE_MS;
+      if (stale) await _send(CMD_SPO2_ON);
+    } finally { _pollBusy = false; }
+  }
+
+  function _startLoop() {
+    if (_pollInterval) clearInterval(_pollInterval);
+    _pollCycle();
+    _pollInterval = setInterval(_pollCycle, POLL_EVERY_MS);
+    _utcInterval  = setInterval(async () => {
+      if (!_connected) return;
+      const ts  = Math.floor(Date.now() / 1000).toString(16).padStart(8, '0');
+      await _send(_checksum('ff0808' + ts));
+    }, 10 * 60 * 1000);
+  }
+
+  function _stopLoop() {
+    if (_pollInterval) clearInterval(_pollInterval);
+    if (_utcInterval)  clearInterval(_utcInterval);
+    _pollInterval = _utcInterval = null; _pollBusy = false;
+  }
+
+  async function _subscribeCustom(server) {
+    try {
+      const svc   = await server.getPrimaryService(UUID_CUSTOM_SVC);
+      const notif = await svc.getCharacteristic(UUID_CUSTOM_NOTIF);
+      await notif.startNotifications();
+      notif.addEventListener('characteristicvaluechanged', e => _parseSportPacket(e.target.value.buffer));
+      _writeChar = await svc.getCharacteristic(UUID_CUSTOM_WRITE);
+      await _delay(200); await _send(_buildAuth());
+      await _delay(200); await _send(_checksum('ff0808' + Math.floor(Date.now()/1000).toString(16).padStart(8,'0')));
+      await _delay(500); await _send(CMD_SPO2_ON);
+      await _delay(300); await _send(CMD_SPORT_NOW);
+      await _delay(220); await _send(CMD_TEMP);
+      _startLoop();
+      return true;
+    } catch (e) { console.warn('[CL837] custom svc unavailable', e.message); return false; }
+  }
+
+  async function _subscribeRSC(server) {
+    try {
+      const svc  = await server.getPrimaryService(UUID_RSC_SVC);
+      const char = await svc.getCharacteristic(UUID_RSC_CHAR);
+      await char.startNotifications();
+      char.addEventListener('characteristicvaluechanged', e => _parseRSC(e.target.value.buffer));
+    } catch (_) {}
+  }
+
+  async function _subscribeHR(server) {
+    try {
+      const svc  = await server.getPrimaryService(UUID_HR_SVC);
+      const char = await svc.getCharacteristic(UUID_HR_CHAR);
+      await char.startNotifications();
+      char.addEventListener('characteristicvaluechanged', e => {
+        const dv    = e.target.value;
+        const flags = dv.getUint8(0);
+        _lastHr     = (flags & 0x1) ? dv.getUint16(1, true) : dv.getUint8(1);
+        if (flags & 0x10) {
+          let off = (flags & 0x1) ? 3 : 2;
+          while (off + 1 < dv.byteLength) {
+            _lastRri = Math.round(dv.getUint16(off, true) / 1024 * 1000);
+            off += 2;
+          }
+        }
+        _pushToDataStore();
+      });
+    } catch (e) { console.warn('[CL837] HR svc unavailable', e.message); }
+  }
+
+  async function _subscribeBattery(server) {
+    try {
+      const svc  = await server.getPrimaryService(UUID_BAT_SVC);
+      const char = await svc.getCharacteristic(UUID_BAT_CHAR);
+      const val  = await char.readValue();
+      sensors.bat = val.getUint8(0);
+      UI.renderCl837Activity();
+    } catch (_) {}
+  }
+
+  async function connectToDevice(device) {
+    try {
+      _device = device;
+      UI.setCl837State("connecting");
+      _device.addEventListener('gattserverdisconnected', () => {
+        _connected = false; _stopLoop(); _writeChar = null;
+        UI.setCl837State("disconnected");
+        UI.showNotice("caution", "CL837 desconectado", "El smartband se desconectó. Presiona Conectar BLE para reconectar.");
+      });
+      _server    = await _device.gatt.connect();
+      _connected = true;
+      await _subscribeHR(_server);
+      await _subscribeCustom(_server);
+      await _subscribeRSC(_server);
+      await _subscribeBattery(_server);
+      UI.setCl837State("connected", _device.name || "CL837");
+      UI.showNotice("safe", "CL837 conectado", "Smartband " + (_device.name || "CL837") + " conectado. HR, SpO₂, temperatura y actividad activos.");
+    } catch (e) {
+      _connected = false;
+      UI.setCl837State("disconnected");
+      UI.showNotice("caution", "Error CL837", e?.message || "No se pudo conectar al CL837.");
+    }
+  }
+
+  async function connect() {
+    if (_connected) { await disconnect(); return; }
+    if (!navigator.bluetooth) {
+      UI.showNotice("caution", "Web Bluetooth no disponible", "Usa Chrome o Edge en localhost o HTTPS para CL837.");
+      return;
+    }
+    try {
+      const device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: [UUID_CUSTOM_SVC, UUID_HR_SVC, UUID_RSC_SVC, UUID_BAT_SVC]
+      });
+      await connectToDevice(device);
+    } catch (e) {
+      _connected = false;
+      UI.setCl837State("disconnected");
+      if (e?.name !== "NotFoundError")
+        UI.showNotice("caution", "Error CL837", e?.message || "No se pudo conectar al CL837.");
+    }
+  }
+
+  async function disconnect() {
+    _stopLoop();
+    if (_device?.gatt?.connected) await _device.gatt.disconnect();
+    _connected = false; _writeChar = null;
+    UI.setCl837State("disconnected");
+  }
+
+  function isConnected() { return _connected; }
+  function getActivity()  { return activity; }
+  function getSensors()   { return sensors; }
+
+  return { connect, connectToDevice, disconnect, isConnected, getActivity, getSensors };
+})();
+
+const UI = (() => {
+  const hold = {
+    hrValue: "--",
+    hrTs: 0
+  };
+  const HR_HOLD_MS = 4000;
+  let clockTimer = null;
+  let demoTimer = null;
+  let demoRunning = false;
+  let lastPacket = null;
+  let initialized = false;
+
+  function init() {
+    if (initialized) return;
+    initialized = true;
+
+    Utils.$("connectBtn").addEventListener("click", handleUnifiedConnectClick);
+    Utils.$("demoBtn").addEventListener("click", toggleDemo);
+    Utils.$("clearBtn").addEventListener("click", clearSession);
+    Utils.$("downloadReportBtn").addEventListener("click", downloadReport);
+    Utils.$("downloadJsonBtn").addEventListener("click", downloadJson);
+    Utils.$("downloadCsvBtn").addEventListener("click", downloadCsv);
+
+    // Botón Standby (sensores off, BLE activo)
+    ["standbyBtn", "standbyBtnPanel"].forEach(id => {
+      const btn = Utils.$(id);
+      if (!btn) return;
+      btn.addEventListener("click", () => {
+        if (!BleManager.isConnected()) return;
+        BleManager.sendCommand("STANDBY");
+      });
+    });
+
+    // Botón Wake (reactivar desde standby)
+    ["wakeBtn", "wakeBtnPanel"].forEach(id => {
+      const btn = Utils.$(id);
+      if (!btn) return;
+      btn.addEventListener("click", () => {
+        if (!BleManager.isConnected()) return;
+        BleManager.sendCommand("WAKE");
+        setTimeout(() => setConnectionState("connected"), 200);
+      });
+    });
+
+    // Botones deep sleep (topbar + panel)
+    ["powerOffBtn", "powerOffBtnPanel"].forEach(id => {
+      const btn = Utils.$(id);
+      if (!btn) return;
+      btn.addEventListener("click", () => {
+        if (!BleManager.isConnected()) return;
+        if (!confirm("¿Enviar POWEROFF al CSAV-01?\nEl dispositivo entrará en deep sleep.\nDespertará al agitarlo (shake) o cada 30s intentará reconectar.")) return;
+        BleManager.sendCommand("POWEROFF");
+        setTimeout(() => BleManager.disconnect(), 400);
+      });
+    });
+
+    document.querySelectorAll("[data-cmd]").forEach(button => {
+      button.addEventListener("click", () => BleManager.sendCommand(button.dataset.cmd));
+    });
+
+    UserProfile.onChange(() => {
+      DataStore.recomputeHrZones();
+      renderUserProfile(lastPacket);
+      renderZoneBreakdown(lastPacket);
+      renderPerformancePanel(lastPacket || {});
+      renderReportPanel(lastPacket);
+    });
+    UserProfile.bind();
+
+    clockTimer = setInterval(updateClocks, 1000);
+    renderLog([]);
+    resetPlaceholders();
+    renderSessionHistory();
+    setConnectionState("disconnected");
+    refreshBleSupportHint();
+  }
+
+  function refreshBleSupportHint() {
+    const support = BleManager.getSupportInfo();
+    const button = Utils.$("connectBtn");
+
+    if (!support.ok) {
+      button.textContent = "Conectar BLE";
+      button.title = support.text;
+      showNotice("caution", support.title, support.text);
+    } else if (support.warning) {
+      button.title = support.text;
+    } else {
+      button.title = "Abrir selector BLE";
+    }
+  }
+
+  async function handleUnifiedConnectClick() {
+    if (demoRunning) stopDemo();
+    if (BleManager.isConnected()) { BleManager.disconnect(); return; }
+    if (CL837Manager.isConnected()) { CL837Manager.disconnect(); return; }
+
+    const support = BleManager.getSupportInfo();
+    if (!support.ok) { showNotice("caution", support.title, support.text); return; }
+
+    try {
+      const device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: [
+          "0000ffe0-0000-1000-8000-00805f9b34fb",
+          "aae28f00-71b5-42a1-8c3c-f9cf6ac969d0",
+          "heart_rate",
+          "00001814-0000-1000-8000-00805f9b34fb",
+          "battery_service"
+        ]
+      });
+      const name = (device.name || "").toUpperCase();
+      if (name.includes("CL837") || name.includes("CHILEAF") || name.includes("LEAF")) {
+        await CL837Manager.connectToDevice(device);
+      } else {
+        await BleManager.connectToDevice(device);
+      }
+    } catch (e) {
+      if (e?.name === "NotFoundError") {
+        showNotice("caution", "Selección cancelada", "El selector BLE se abrió, pero no se eligió ningún dispositivo.");
+      } else {
+        showNotice("caution", "Error BLE", e?.message || "No se pudo conectar.");
+      }
+    }
+  }
+
+  function handleConnectClick() {
+    handleUnifiedConnectClick();
+  }
+
+  // ── Historial de sesiones en localStorage ───────────────────────────────────
+  const SESSION_KEY = "csav_sessions";
+  const MAX_HISTORY = 20;
+
+  function saveSessionToHistory() {
+    const elapsed = DataStore.getElapsedSeconds();
+    if (elapsed < 10) return null;                    // sesión demasiado corta
+    const avgs  = DataStore.getAverages();
+    const state = DataStore.getState();
+    const summary = {
+      ts:       Date.now(),
+      duration: elapsed,
+      avgHr:    Math.round(avgs.hr)  || 0,
+      avgSpo2:  +(avgs.spo2 || 0).toFixed(1),
+      avgSkin:  +(avgs.skin || 0).toFixed(1),
+      peakSkin: +(state.peakSkin > -Infinity ? state.peakSkin : 0).toFixed(1),
+      jumps:    lastPacket?.jumps   || 0,
+      strides:  lastPacket?.strides || 0,
+      dist:     +(_imu.totalDist).toFixed(0),
+      peakVel:  +(_imu.peakVel * 3.6).toFixed(1),
+      placement: lastPacket?.placement || "wrist"
+    };
+    try {
+      const history = JSON.parse(localStorage.getItem(SESSION_KEY) || "[]");
+      history.unshift(summary);
+      if (history.length > MAX_HISTORY) history.length = MAX_HISTORY;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(history));
+    } catch (_) {}
+    return summary;
+  }
+
+  function renderSessionHistory() {
+    const el = Utils.$("sessionHistoryList");
+    if (!el) return;
+    try {
+      const history = JSON.parse(localStorage.getItem(SESSION_KEY) || "[]");
+      if (history.length === 0) { el.innerHTML = "<li style='color:var(--ink-dim)'>Sin sesiones guardadas.</li>"; return; }
+      el.innerHTML = history.map(s => {
+        const d = new Date(s.ts);
+        const hm = d.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
+        const fecha = d.toLocaleDateString("es", { day: "2-digit", month: "short" });
+        const dur = Utils.fmtTime(s.duration);
+        const parts = [
+          `<strong>${fecha} ${hm}</strong> · ${dur}`,
+          s.avgHr   ? `FC ${s.avgHr} bpm` : "",
+          s.avgSkin ? `Piel ${s.avgSkin} °C` : "",
+          s.jumps   ? `${s.jumps} saltos` : "",
+          s.strides ? `${s.strides} pasos` : "",
+          s.dist    ? `${s.dist} m` : "",
+          s.peakVel ? `pico ${s.peakVel} km/h` : ""
+        ].filter(Boolean).join(" · ");
+        return `<li style="padding:6px 0;border-bottom:1px solid var(--line)">${parts}</li>`;
+      }).join("");
+    } catch (_) { el.innerHTML = ""; }
+  }
+
+  function clearSession() {
+    // 1. Guardar resumen antes de limpiar
+    const saved = saveSessionToHistory();
+
+    // 2. Reset firmware si está conectado
+    if (BleManager.isConnected()) {
+      BleManager.sendCommand("RESET");
+    }
+
+    // 3. Reset estado HTML
+    DataStore.reset();
+    _imu.peakVel = 0; _imu.totalDist = 0;
+    _imu.prevStrides = 0; _imu.prevStrideTs = Date.now();
+    hold.hrValue = "--"; hold.hrTs = 0;
+    lastPacket = null;
+    resetPlaceholders();
+    renderLog([]);
+    renderSessionHistory();
+
+    // 4. Notificación con resumen
+    if (saved) {
+      const dur  = Utils.fmtTime(saved.duration);
+      const parts = [
+        saved.avgHr   ? `FC media ${saved.avgHr} bpm` : "",
+        saved.jumps   ? `${saved.jumps} saltos` : "",
+        saved.strides ? `${saved.strides} pasos` : "",
+        saved.dist    ? `${saved.dist} m` : ""
+      ].filter(Boolean).join(" · ");
+      showNotice("safe", `Sesión guardada (${dur})`, parts || "Sin datos de actividad registrados.");
+    } else {
+      showNotice("safe", "Nueva sesión", "Panel y firmware reiniciados a cero.");
+    }
+  }
+
+  function resetPlaceholders() {
+    document.querySelectorAll("[data-placeholder]").forEach(el => {
+      el.textContent = el.dataset.placeholder || "--";
+    });
+    Utils.$("heroSession").textContent = "00:00";
+    Utils.$("sessionClock").textContent = "00:00";
+    Utils.$("heroSource").textContent = "Sin contacto BLE. Chrome o Edge en `localhost` funciona mejor.";
+    Utils.$("riskPill").textContent = "Esperando datos";
+    Utils.toneClass(Utils.$("riskPill"), "safe");
+    Utils.$("heroMessageTitle").textContent = "Lectura rápida";
+    Utils.$("heroMessage").textContent = "Tu panel principal mostrará primero el riesgo térmico, luego el contexto de carga y circulación para evitar perderte entre demasiados números.";
+    Utils.$("chartMeta").textContent = "Sin muestras";
+    Utils.$("cmdResponse").textContent = "Sin respuesta aún.";
+    Utils.$("diagState").textContent = "Desconectado";
+    Utils.$("diagName").textContent = "--";
+    Utils.$("diagMac").textContent = "--";
+    Utils.$("diagPps").textContent = "0";
+    Utils.$("diagTotal").textContent = "0";
+    Utils.$("diagContact").textContent = "--";
+    Utils.$("devName").textContent = "CSAV-01";
+    Utils.$("devMac").textContent = "MAC pendiente de telemetría.";
+    Utils.$("signalHealth").textContent = "--";
+    Utils.$("thermalRing").style.setProperty("--ring-color", "#12b981");
+    Utils.$("thermalRing").style.setProperty("--ring-angle", "72deg");
+    Utils.$("reportTitle").textContent = "Reporte listo para exportar";
+    Utils.$("reportText").textContent = "Conecta BLE o activa Demo para llenar el informe con datos en tiempo real y guardarlo como HTML, JSON o CSV.";
+    Utils.$("reportScore").textContent = "--";
+    Utils.$("reportAthlete").textContent = "--";
+    Utils.$("reportZone").textContent = "--";
+    Utils.$("reportLoad").textContent = "--";
+    Utils.$("reportSignal").textContent = "--";
+    Utils.$("hrNow").textContent = "--";
+    Utils.$("hrZoneNow").textContent = "--";
+    Utils.$("hrAvgLive").textContent = "--";
+    Utils.$("hrPeakLive").textContent = "--";
+    Utils.$("zoneNowLabel").textContent = "--";
+    Utils.$("zoneNowRange").textContent = "--";
+
+    document.querySelectorAll("[data-zone]").forEach(el => el.classList.remove("active"));
+    document.querySelectorAll("[data-zone-item]").forEach(el => el.classList.remove("active"));
+    document.querySelectorAll("[data-hr-zone]").forEach(el => el.classList.remove("active"));
+
+    for (let zone = 1; zone <= 5; zone++) {
+      Utils.$("zoneTime" + zone).textContent = "00:00";
+      Utils.$("zoneFill" + zone).style.width = "0%";
+      Utils.$("zoneRange" + zone).textContent = UserProfile.zoneRangeLabel(zone);
+    }
+
+    const canvas = Utils.$("trendChart");
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    const hrCanvas = Utils.$("hrChart");
+    if (hrCanvas) {
+      const ctx = hrCanvas.getContext("2d");
+      ctx.clearRect(0, 0, hrCanvas.width, hrCanvas.height);
+    }
+
+    renderUserProfile(null);
+    renderReportPanel(null);
+    renderZoneBreakdown(null);
+    renderPerformancePanel({});
+  }
+
+  function setConnectionState(state, name) {
+    const header = Utils.$("headerState");
+    const button = Utils.$("connectBtn");
+    const diagState = Utils.$("diagState");
+
+    header.dataset.state = state;
+    header.textContent = state === "connected"
+      ? (name || "Conectado")
+      : state === "connecting"
+        ? "Conectando"
+        : state === "demo"
+          ? "Modo demo"
+          : "Desconectado";
+
+    const poBtn      = Utils.$("powerOffBtn");
+    const stbyBtn    = Utils.$("standbyBtn");
+    const wkBtn      = Utils.$("wakeBtn");
+    const showActive = (v) => { if (v) { v.style.display = ""; v.disabled = false; } };
+    const hideBtn    = (v) => { if (v) { v.style.display = "none"; v.disabled = true; } };
+
+    if (state === "connected") {
+      button.textContent = "Desconectar";
+      diagState.textContent = "Conectado";
+      showActive(poBtn); showActive(stbyBtn); hideBtn(wkBtn);
+    } else if (state === "standby") {
+      button.textContent = "Desconectar";
+      diagState.textContent = "Standby";
+      hideBtn(poBtn); hideBtn(stbyBtn); showActive(wkBtn);
+    } else if (state === "connecting") {
+      button.textContent = "Conectando...";
+      diagState.textContent = "Conectando";
+      hideBtn(poBtn); hideBtn(stbyBtn); hideBtn(wkBtn);
+    } else if (state === "demo") {
+      button.textContent = "Conectar BLE";
+      diagState.textContent = "Demo";
+      hideBtn(poBtn); hideBtn(stbyBtn); hideBtn(wkBtn);
+    } else {
+      button.textContent = "Conectar BLE";
+      diagState.textContent = "Desconectado";
+      hideBtn(poBtn); hideBtn(stbyBtn); hideBtn(wkBtn);
+    }
+  }
+
+  function showNotice(tone, title, text) {
+    const banner = Utils.$("noticeBanner");
+    Utils.toneClass(banner, tone);
+    Utils.$("noticeBadge").textContent = tone.toUpperCase();
+    Utils.$("noticeTitle").textContent = title;
+    Utils.$("noticeText").textContent = text;
+  }
+
+  const I2C_NAMES = {
+    "0x57": "MAX30102/MAX30105", "0x5A": "MLX90614",
+    "0x68": "MPU-9250 (AD0=GND)", "0x69": "MPU-9250 (AD0=VCC)",
+    "0x76": "BME680/BME280", "0x77": "BME680/BMP280",
+    "0x3C": "OLED SSD1306", "0x3D": "OLED SSD1306"
+  };
+
+  function showCommandResponse(text) {
+    const el = Utils.$("cmdResponse");
+    try {
+      const obj = JSON.parse(text);
+      if (obj.cmd === "I2C_SCAN") {
+        const devs = obj.devices || [];
+        if (devs.length === 0) {
+          el.textContent = "I2C SCAN: sin dispositivos encontrados";
+        } else {
+          el.textContent = "I2C SCAN: " + devs.map(a => `${a} ${I2C_NAMES[a.toLowerCase()] || ""}`).join("  |  ");
+        }
+        return;
+      }
+    } catch (_) {}
+    el.textContent = text;
+  }
+
+  function render(pkt) {
+    lastPacket = pkt;
+    // Standby heartbeat: dispositivo en bajo consumo con BLE activo
+    if (pkt.standby === true) {
+      if (BleManager.isConnected()) setConnectionState("standby");
+      return;
+    }
+    if (BleManager.isConnected()) setConnectionState("connected");
+    renderHero(pkt);
+    renderDashboard(pkt);
+    renderTrendPanel(pkt);
+    renderPerformancePanel(pkt);
+    renderZoneBreakdown(pkt);
+    renderCoach(pkt);
+    renderEnvironment(pkt);
+    renderSession(pkt);
+    renderUserProfile(pkt);
+    renderReportPanel(pkt);
+    renderDiagnostics(pkt);
+    renderDerived(pkt);
+    renderIMU(pkt);
+    updateClocks();
+  }
+
+  // ── Variables de sesión IMU ──────────────────────────────────────────────
+  const _imu = { peakVel: 0, totalDist: 0, prevStrides: 0, prevStrideTs: Date.now() };
+
+  function updatePlacementButtons(placement) {
+    const wBtn = Utils.$("placementWristBtn");
+    const cBtn = Utils.$("placementChestBtn");
+    if (!wBtn || !cBtn) return;
+    const isChest = placement === "chest";
+    wBtn.style.background = isChest ? "var(--surface-strong)" : "var(--teal)";
+    wBtn.style.color       = isChest ? "var(--ink-soft)" : "#fff";
+    cBtn.style.background  = isChest ? "var(--teal)" : "var(--surface-strong)";
+    cBtn.style.color       = isChest ? "#fff" : "var(--ink-soft)";
+  }
+
+  function setPlacement(placement) {
+    if (!BleManager.isConnected()) return;
+    const cmd = placement === "chest" ? "PLACEMENT:CHEST" : "PLACEMENT:WRIST";
+    BleManager.sendCommand(cmd);
+    updatePlacementButtons(placement);
+  }
+
+  function renderIMU(pkt) {
+    const imuOk = !!pkt.imu_ok;
+    const vel   = Number.isFinite(pkt.vel)     ? pkt.vel     : 0;
+    const jumps = Number.isFinite(pkt.jumps)   ? pkt.jumps   : 0;
+    const str   = Number.isFinite(pkt.strides) ? pkt.strides : 0;
+    const stab  = Number.isFinite(pkt.stab)    ? pkt.stab    : 0;
+    const ax    = Number.isFinite(pkt.ax)      ? pkt.ax      : null;
+    const ay    = Number.isFinite(pkt.ay)      ? pkt.ay      : null;
+    const az    = Number.isFinite(pkt.az)      ? pkt.az      : null;
+    const aMag  = (ax !== null && ay !== null && az !== null)
+                  ? Math.sqrt(ax*ax + ay*ay + az*az) / 9.81
+                  : null;
+
+    // Pico de velocidad sesión
+    if (vel > _imu.peakVel) _imu.peakVel = vel;
+
+    // Distancia estimada (zancadas × longitud por paso 0.75 m)
+    const newStrides = str - _imu.prevStrides;
+    if (newStrides > 0) { _imu.totalDist += newStrides * 0.75; _imu.prevStrides = str; }
+
+    // Cadencia (zancadas por minuto desde últimas 5 s de señal)
+    const now = Date.now();
+    let cadence = "--";
+    if (newStrides > 0) {
+      const dtMin = (now - _imu.prevStrideTs) / 60000;
+      if (dtMin > 0) cadence = Math.round(newStrides / dtMin) + " z/min";
+      _imu.prevStrideTs = now;
+    }
+
+    // Badge
+    const badge = Utils.$("imuSourceBadge");
+    if (badge) {
+      badge.textContent   = imuOk ? "GY-91 live" : "sin IMU";
+      badge.className     = "source-badge " + (imuOk ? "csav" : "none");
+    }
+
+    // Sincronizar botones de posición con el valor recibido del firmware
+    if (pkt.placement) updatePlacementButtons(pkt.placement);
+    Utils.$("imuVelMs")    && (Utils.$("imuVelMs").textContent    = vel > 0 ? vel.toFixed(2) + " m/s" : "--");
+    Utils.$("imuVelKmh")   && (Utils.$("imuVelKmh").textContent   = vel > 0 ? (vel * 3.6).toFixed(1) + " km/h" : "m/s desde cadencia de zancadas");
+    Utils.$("imuJumps")    && (Utils.$("imuJumps").textContent    = jumps > 0 ? jumps : "--");
+    Utils.$("imuStrides")  && (Utils.$("imuStrides").textContent  = str > 0 ? str : "--");
+    Utils.$("imuStab")     && (Utils.$("imuStab").textContent     = imuOk ? stab.toFixed(1) + " %" : "--");
+    Utils.$("imuCadence")  && (Utils.$("imuCadence").textContent  = cadence);
+    Utils.$("imuVelPeak")  && (Utils.$("imuVelPeak").textContent  = _imu.peakVel > 0 ? (_imu.peakVel * 3.6).toFixed(1) + " km/h" : "--");
+    Utils.$("imuDist")     && (Utils.$("imuDist").textContent     = _imu.totalDist > 0
+                                 ? _imu.totalDist > 1000
+                                   ? (_imu.totalDist / 1000).toFixed(2) + " km"
+                                   : Math.round(_imu.totalDist) + " m"
+                                 : "--");
+    Utils.$("imuStatus")   && (Utils.$("imuStatus").textContent   = imuOk
+                                 ? (stab > 80 ? "Quieto" : stab > 50 ? "Activo" : "Alta actividad")
+                                 : "Sin IMU");
+
+    // Barra de estabilización
+    const stabBar = Utils.$("imuStabBar");
+    if (stabBar) {
+      stabBar.style.width      = (imuOk ? stab : 0) + "%";
+      stabBar.style.background = stab > 75 ? "var(--safe)" : stab > 45 ? "var(--alert)" : "var(--danger)";
+    }
+
+    // Acelerómetro raw
+    Utils.$("imuAx")   && (Utils.$("imuAx").textContent   = ax !== null ? ax.toFixed(3) : "--");
+    Utils.$("imuAy")   && (Utils.$("imuAy").textContent   = ay !== null ? ay.toFixed(3) : "--");
+    Utils.$("imuAz")   && (Utils.$("imuAz").textContent   = az !== null ? az.toFixed(3) : "--");
+    Utils.$("imuAmag") && (Utils.$("imuAmag").textContent = aMag !== null ? aMag.toFixed(3) + " g" : "--");
+
+    // Wake-on-shake hint
+    Utils.$("imuWakeTitle") && (Utils.$("imuWakeTitle").textContent = imuOk
+      ? (stab < 30 ? "Movimiento detectado — dispositivo activo" : "Dispositivo quieto — ahorrando energía")
+      : "Wake-on-shake");
+    Utils.$("imuWakeCopy") && (Utils.$("imuWakeCopy").textContent = imuOk
+      ? "Agitar despierta el dispositivo del deep sleep. Sin movimiento por 5 min → duerme automáticamente."
+      : "Agitar el dispositivo lo despertará del deep sleep. Si está quieto más de 5 min, entra en deep sleep automáticamente.");
+
+    // Botones power: habilitar/mostrar según estado de conexión y standby
+    const connected = BleManager.isConnected();
+    const isStandby = connected && lastPacket?.standby === true;
+    ["powerOffBtn", "powerOffBtnPanel"].forEach(id => {
+      const btn = Utils.$(id);
+      if (!btn) return;
+      btn.disabled = !connected || isStandby;
+      if (id === "powerOffBtn") btn.style.display = (connected && !isStandby) ? "" : "none";
+    });
+    ["standbyBtn", "standbyBtnPanel"].forEach(id => {
+      const btn = Utils.$(id);
+      if (!btn) return;
+      btn.disabled = !connected || isStandby;
+      if (id === "standbyBtn") btn.style.display = (connected && !isStandby) ? "" : "none";
+    });
+    ["wakeBtn", "wakeBtnPanel"].forEach(id => {
+      const btn = Utils.$(id);
+      if (!btn) return;
+      btn.disabled = !isStandby;
+      btn.style.display = isStandby ? "" : "none";
+    });
+  }
+
+  function renderHero(pkt) {
+    const risk = pkt.risk;
+    const tone = risk.key;
+    const ring = Utils.$("thermalRing");
+    const view = pkt.display || {};
+    ring.style.setProperty("--ring-color", risk.hex);
+    ring.style.setProperty("--ring-angle", Math.round((risk.percent / 100) * 360) + "deg");
+
+    Utils.$("heroSkin").textContent = Number.isFinite(view.tSkin) ? Utils.fmt(view.tSkin, 1) : "--";
+    Utils.$("heroSkin").style.color = risk.hex;
+    Utils.$("heroHumidex").textContent = Number.isFinite(view.humidex) ? Utils.fmt(view.humidex, 1) : "--";
+    Utils.$("heroGrad").textContent = Number.isFinite(view.grad) ? Utils.fmt(view.grad, 1) + " °C" : "--";
+    Utils.$("heroDtdt").textContent = Number.isFinite(view.dt_dt) ? ((view.dt_dt >= 0 ? "+" : "") + Utils.fmt(view.dt_dt, 3) + " °C/min") : "--";
+    Utils.$("heroSession").textContent = Utils.fmtTime(DataStore.getElapsedSeconds());
+    Utils.$("heroSource").textContent = pkt.sleep
+      ? "Firmware en sleep por falta de contacto. La sesión queda visible."
+      : (pkt.stale?.tSkin || pkt.stale?.humidex || pkt.stale?.hr)
+        ? "Mostrando último valor útil retenido mientras la señal se recupera."
+      : "SpO₂ útil: " + pkt.spo2_source + " · Calidad óptica: " + pkt.contact_quality;
+
+    const pill = Utils.$("riskPill");
+    pill.textContent = risk.label;
+    pill.style.color = risk.hex;
+    Utils.toneClass(pill, tone);
+
+    Utils.$("heroMessageTitle").textContent = risk.title;
+    Utils.$("heroMessage").textContent = risk.text;
+
+    document.querySelectorAll("[data-zone]").forEach(segment => {
+      segment.classList.toggle("active", segment.dataset.zone === tone);
+      segment.style.color = segment.dataset.zone === tone ? risk.hex : "";
+    });
+
+    showNotice(tone, risk.title, risk.notice);
+  }
+
+  function resolveCardHr(pkt) {
+    const quality = pkt.contact_quality || "NONE";
+    const lastHr = DataStore.getState().lastValid.hr;
+
+    if (pkt.hr_valid && pkt.hr_display > 0) {
+      hold.hrValue = pkt.hr_display + " BPM";
+      hold.hrTs = Date.now();
+      return {
+        value: hold.hrValue,
+        sub: quality + (Number.isFinite(pkt.pi) && pkt.pi > 0 ? " · PI " + pkt.pi.toFixed(2) + "%" : "")
+      };
+    }
+
+    if (quality !== "NONE" && hold.hrValue !== "--" && (Date.now() - hold.hrTs) < HR_HOLD_MS) {
+      return {
+        value: hold.hrValue,
+        sub: "Manteniendo último BPM válido mientras se estabiliza la señal."
+      };
+    }
+
+    if (quality === "WEAK") {
+      return {
+        value: Number.isFinite(lastHr) ? Math.round(lastHr) + " BPM" : "débil",
+        sub: Number.isFinite(lastHr)
+          ? "Señal débil. Conservando el último BPM útil."
+          : "Hay contacto, pero la señal todavía no alcanza consistencia."
+      };
+    }
+
+    if (Number.isFinite(lastHr)) {
+      hold.hrValue = Math.round(lastHr) + " BPM";
+      return {
+        value: hold.hrValue,
+        sub: "Último valor útil retenido. La interfaz no se vacía ante una pérdida breve."
+      };
+    }
+
+    hold.hrValue = "--";
+    return {
+      value: "--",
+      sub: "Sin contacto útil en este momento."
+    };
+  }
+
+  function renderDashboard(pkt) {
+    const hrCard = resolveCardHr(pkt);
+    const view = pkt.display || {};
+    Utils.$("cardHr").textContent = hrCard.value;
+    Utils.$("cardHrSub").textContent = hrCard.sub;
+
+    Utils.$("cardSpo2").textContent = Number.isFinite(view.spo2) ? Utils.fmt(view.spo2, 1) + " %" : "--";
+    Utils.$("cardSpo2Sub").textContent = (pkt.stale?.spo2 ? "Último valor útil · " : "Fuente: ") + pkt.spo2_source;
+
+    Utils.$("cardCharge").textContent = Number.isFinite(view.charge) ? Utils.fmt(view.charge, 1) + " °C·s" : "--";
+    Utils.$("cardChargeSub").textContent = view.charge >= 70
+      ? "Carga alta. El calentamiento positivo acumulado ya es importante."
+      : view.charge >= 30
+        ? "Carga moderada. Vale la pena vigilar cómo sigue creciendo."
+        : "Carga baja. Buen punto de referencia para sesión o recuperación.";
+
+    Utils.$("cardContact").textContent = pkt.contact_quality || "--";
+    Utils.$("cardContactSub").textContent = pkt.contact
+      ? "Sensor óptico con contacto útil para interpretación."
+      : "Sin contacto. Ajusta wearable o dedo antes de leer FC/SpO₂.";
+
+    Utils.$("cardTamb").textContent = Number.isFinite(view.tAmb) ? Utils.fmt(view.tAmb, 1) + " °C" : "--";
+    Utils.$("cardTambSub").textContent = pkt.env_ok
+      ? "Contexto ambiental válido desde BME680 o MLX."
+      : "Sensor ambiental aún sin datos sólidos.";
+
+    Utils.$("cardPiGrn").textContent = Number.isFinite(view.piGrn) ? view.piGrn.toFixed(2) + " %" : "--";
+    Utils.$("cardPiGrnSub").textContent = Number.isFinite(view.grad) && view.grad < 5
+      ? "Perfusión superficial importante porque el gradiente ya es bajo."
+      : "Buena referencia de circulación cutánea superficial.";
+  }
+
+  function renderTrendPanel(pkt) {
+    const skinSeries = DataStore.getSeries("tSkin");
+    const ambSeries = DataStore.getSeries("tAmb");
+    const averages = DataStore.getAverages();
+    const delta10 = Utils.rangeDelta(skinSeries, 5);
+    const peakSkin = DataStore.getState().peakSkin;
+
+    Utils.$("avgSkin").textContent = Number.isFinite(averages.skin) ? Utils.fmt(averages.skin, 1) + " °C" : "--";
+    Utils.$("avgHumidex").textContent = Number.isFinite(averages.humidex) ? Utils.fmt(averages.humidex, 1) : "--";
+    Utils.$("trendSkin").textContent = Number.isFinite(delta10)
+      ? ((delta10 >= 0 ? "+" : "") + Utils.fmt(delta10, 2) + " °C")
+      : "--";
+    Utils.$("peakSkin").textContent = Number.isFinite(peakSkin) ? Utils.fmt(peakSkin, 1) + " °C" : "--";
+    Utils.$("chartMeta").textContent = DataStore.getState().points.length + " muestras · última sesión";
+
+    drawTrendChart(skinSeries, ambSeries);
+  }
+
+  function renderPerformancePanel(pkt) {
+    const hrSeries = DataStore.getSeries("hr");
+    const averages = DataStore.getAverages();
+    const state = DataStore.getState();
+    const currentHr = Number.isFinite(pkt.display?.hr) ? Math.round(pkt.display.hr) : NaN;
+    const zoneNow = Number.isFinite(currentHr) ? UserProfile.zoneForHr(currentHr) : null;
+
+    Utils.$("hrNow").textContent = Number.isFinite(currentHr) ? currentHr + " BPM" : "--";
+    Utils.$("hrZoneNow").textContent = zoneNow ? "Z" + zoneNow : "--";
+    Utils.$("hrAvgLive").textContent = Number.isFinite(averages.hr) ? Utils.fmtInt(averages.hr) + " BPM" : "--";
+    Utils.$("hrPeakLive").textContent = Number.isFinite(state.peakHr) && state.peakHr > -Infinity ? Utils.fmtInt(state.peakHr) + " BPM" : "--";
+
+    drawHrChart(hrSeries);
+  }
+
+  function drawTrendChart(skinSeries, ambSeries) {
+    const canvas = Utils.$("trendChart");
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const width = canvas.clientWidth * dpr;
+    const height = canvas.clientHeight * dpr;
+
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+
+    ctx.clearRect(0, 0, width, height);
+
+    const skinValid = skinSeries.filter(Number.isFinite);
+    const ambValid = ambSeries.filter(Number.isFinite);
+
+    if (skinValid.length < 2) {
+      ctx.fillStyle = "rgba(93, 112, 132, 0.85)";
+      ctx.font = `${14 * dpr}px Manrope`;
+      ctx.fillText("Esperando suficientes muestras para dibujar tendencia…", 20 * dpr, 36 * dpr);
+      return;
+    }
+
+    const values = skinValid.concat(ambValid).concat([38.5]);
+    const min = Math.min(...values) - 0.4;
+    const max = Math.max(...values) + 0.4;
+    const padX = 24 * dpr;
+    const padY = 22 * dpr;
+    const innerW = width - padX * 2;
+    const innerH = height - padY * 2;
+
+    const getX = index => padX + (index / Math.max(skinSeries.length - 1, 1)) * innerW;
+    const getY = value => padY + innerH - ((value - min) / Math.max(max - min, 0.1)) * innerH;
+
+    ctx.strokeStyle = "rgba(16, 32, 48, 0.08)";
+    ctx.lineWidth = 1 * dpr;
+    for (let step = 0; step < 4; step++) {
+      const y = padY + (innerH / 3) * step;
+      ctx.beginPath();
+      ctx.moveTo(padX, y);
+      ctx.lineTo(width - padX, y);
+      ctx.stroke();
+    }
+
+    const thresholdY = getY(38.5);
+    ctx.save();
+    ctx.setLineDash([6 * dpr, 6 * dpr]);
+    ctx.strokeStyle = "rgba(242, 72, 91, 0.45)";
+    ctx.beginPath();
+    ctx.moveTo(padX, thresholdY);
+    ctx.lineTo(width - padX, thresholdY);
+    ctx.stroke();
+    ctx.restore();
+
+    const fillGradient = ctx.createLinearGradient(0, padY, 0, height - padY);
+    fillGradient.addColorStop(0, "rgba(255, 111, 77, 0.22)");
+    fillGradient.addColorStop(1, "rgba(255, 111, 77, 0.02)");
+
+    ctx.beginPath();
+    let started = false;
+    skinSeries.forEach((value, index) => {
+      if (!Number.isFinite(value)) return;
+      const x = getX(index);
+      const y = getY(value);
+      if (!started) {
+        ctx.moveTo(x, y);
+        started = true;
+      } else {
+        ctx.lineTo(x, y);
+      }
+    });
+    if (started) {
+      ctx.lineTo(getX(skinSeries.length - 1), height - padY);
+      ctx.lineTo(getX(0), height - padY);
+      ctx.closePath();
+      ctx.fillStyle = fillGradient;
+      ctx.fill();
+    }
+
+    drawLineSeries(ctx, skinSeries, getX, getY, "#ff6f4d", 2.5 * dpr);
+    drawLineSeries(ctx, ambSeries, getX, getY, "#2f9cf4", 2 * dpr, [8 * dpr, 5 * dpr]);
+
+    const lastSkin = Utils.lastValid(skinSeries);
+    const lastAmb = Utils.lastValid(ambSeries);
+    const lastSkinIndex = skinSeries.length - 1;
+    const xSkin = getX(lastSkinIndex);
+
+    if (Number.isFinite(lastSkin)) {
+      ctx.fillStyle = "#ff6f4d";
+      ctx.beginPath();
+      ctx.arc(xSkin, getY(lastSkin), 4 * dpr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (Number.isFinite(lastAmb)) {
+      ctx.fillStyle = "#2f9cf4";
+      ctx.beginPath();
+      ctx.arc(getX(ambSeries.length - 1), getY(lastAmb), 4 * dpr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawHrChart(hrSeries) {
+    const canvas = Utils.$("hrChart");
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const width = canvas.clientWidth * dpr;
+    const height = canvas.clientHeight * dpr;
+
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+
+    ctx.clearRect(0, 0, width, height);
+    const valid = hrSeries.filter(Number.isFinite);
+    if (valid.length < 2) {
+      ctx.fillStyle = "rgba(93, 112, 132, 0.85)";
+      ctx.font = `${14 * dpr}px Manrope`;
+      ctx.fillText("Esperando suficientes muestras de FC…", 20 * dpr, 36 * dpr);
+      return;
+    }
+
+    const profile = UserProfile.get();
+    const min = Math.max(30, profile.hrRest - 10);
+    const max = Math.max(profile.hrMax + 8, ...valid, min + 40);
+    const padX = 24 * dpr;
+    const padY = 20 * dpr;
+    const innerW = width - padX * 2;
+    const innerH = height - padY * 2;
+    const getX = index => padX + (index / Math.max(hrSeries.length - 1, 1)) * innerW;
+    const getY = value => padY + innerH - ((value - min) / Math.max(max - min, 1)) * innerH;
+    const thresholds = UserProfile.thresholds();
+    const zoneColors = ["rgba(18,185,129,0.09)", "rgba(47,156,244,0.09)", "rgba(255,159,67,0.1)", "rgba(255,111,77,0.1)", "rgba(242,72,91,0.1)"];
+
+    thresholds.forEach((band, index) => {
+      const yTop = getY(band.max);
+      const yBottom = getY(band.min);
+      ctx.fillStyle = zoneColors[index];
+      ctx.fillRect(padX, yTop, innerW, yBottom - yTop);
+    });
+
+    ctx.strokeStyle = "rgba(16, 32, 48, 0.08)";
+    ctx.lineWidth = 1 * dpr;
+    for (let step = 0; step < 4; step++) {
+      const y = padY + (innerH / 3) * step;
+      ctx.beginPath();
+      ctx.moveTo(padX, y);
+      ctx.lineTo(width - padX, y);
+      ctx.stroke();
+    }
+
+    drawLineSeries(ctx, hrSeries, getX, getY, "#6b63ff", 2.6 * dpr);
+    const lastHr = Utils.lastValid(hrSeries);
+    if (Number.isFinite(lastHr)) {
+      ctx.fillStyle = "#6b63ff";
+      ctx.beginPath();
+      ctx.arc(getX(hrSeries.length - 1), getY(lastHr), 4 * dpr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawLineSeries(ctx, series, getX, getY, color, width, dash = []) {
+    ctx.save();
+    ctx.beginPath();
+    let started = false;
+    series.forEach((value, index) => {
+      if (!Number.isFinite(value)) return;
+      const x = getX(index);
+      const y = getY(value);
+      if (!started) {
+        ctx.moveTo(x, y);
+        started = true;
+      } else {
+        ctx.lineTo(x, y);
+      }
+    });
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    if (dash.length) ctx.setLineDash(dash);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function renderZoneBreakdown(pkt) {
+    const state = DataStore.getState();
+    const total = Object.values(state.hrZoneSeconds).reduce((sum, seconds) => sum + seconds, 0);
+    const currentHr = pkt?.display?.hr;
+    const currentZone = Number.isFinite(currentHr) ? UserProfile.zoneForHr(currentHr) : null;
+
+    Utils.$("zoneNowLabel").textContent = currentZone ? "Z" + currentZone : "--";
+    Utils.$("zoneNowRange").textContent = currentZone ? UserProfile.zoneRangeLabel(currentZone) : "--";
+
+    for (let zone = 1; zone <= 5; zone++) {
+      const seconds = state.hrZoneSeconds["z" + zone];
+      Utils.$("zoneTime" + zone).textContent = Utils.fmtTime(seconds);
+      Utils.$("zoneFill" + zone).style.width = (total ? (seconds / total) * 100 : 0) + "%";
+      Utils.$("zoneRange" + zone).textContent = UserProfile.zoneRangeLabel(zone);
+      const row = document.querySelector("[data-hr-zone=\"" + zone + "\"]");
+      if (row) {
+        row.classList.toggle("active", currentZone === zone);
+        row.style.color = currentZone === zone ? RiskModel.zones[Math.min(zone - 1, RiskModel.zones.length - 1)].hex : "";
+      }
+    }
+  }
+
+  function renderCoach(pkt) {
+    const risk = pkt.risk;
+    const coachCard = Utils.$("coachCard");
+    Utils.toneClass(coachCard, risk.key);
+    Utils.$("coachTitle").textContent = risk.title;
+    Utils.$("coachText").textContent = risk.text;
+
+    document.querySelectorAll("[data-zone-item]").forEach(item => {
+      const active = item.dataset.zoneItem === risk.key;
+      item.classList.toggle("active", active);
+      item.style.color = active ? risk.hex : "";
+    });
+
+    const state = DataStore.getState();
+    Utils.$("timeAbove385").textContent = Utils.fmtTime(state.timeAbove385);
+    Utils.$("timeHighRisk").textContent = Utils.fmtTime(state.timeHighRisk);
+    Utils.$("minGrad").textContent = Number.isFinite(state.minGrad) ? Utils.fmt(state.minGrad, 1) + " °C" : "--";
+    Utils.$("maxDtdt").textContent = Number.isFinite(state.maxDtdt) && state.maxDtdt > -Infinity
+      ? Utils.fmt(state.maxDtdt, 3)
+      : "--";
+  }
+
+  function renderEnvironment(pkt) {
+    const view = pkt.display || {};
+    Utils.$("envTemp").textContent = Number.isFinite(view.tAmb) ? Utils.fmt(view.tAmb, 1) + " °C" : "--";
+    Utils.$("envHum").textContent = Number.isFinite(view.hum) ? Utils.fmt(view.hum, 0) + " %" : "--";
+    Utils.$("envPres").textContent = Number.isFinite(view.pres) ? Utils.fmt(view.pres, 0) + " hPa" : "--";
+    Utils.$("envGas").textContent = Number.isFinite(view.gas) ? Utils.fmt(view.gas / 1000, 1) + " kΩ" : "--";
+    Utils.$("sigPi").textContent = Number.isFinite(view.pi) ? view.pi.toFixed(2) + " %" : "--";
+    Utils.$("sigPiGrn").textContent = Number.isFinite(view.piGrn) ? view.piGrn.toFixed(2) + " %" : "--";
+    Utils.$("sigRri").textContent = Number.isFinite(view.rri) ? Math.round(view.rri) + " ms" : "--";
+    Utils.$("spo2Source").textContent = pkt.spo2_source;
+  }
+
+  function renderSession(pkt) {
+    const state = DataStore.getState();
+    const averages = DataStore.getAverages();
+
+    Utils.$("sumPeakSkin").textContent = Number.isFinite(state.peakSkin) && state.peakSkin > -Infinity ? Utils.fmt(state.peakSkin, 1) + " °C" : "--";
+    Utils.$("sumPeakHumidex").textContent = Number.isFinite(state.peakHumidex) && state.peakHumidex > -Infinity ? Utils.fmt(state.peakHumidex, 1) : "--";
+    Utils.$("sumPeakHr").textContent = Number.isFinite(state.peakHr) && state.peakHr > -Infinity ? Utils.fmtInt(state.peakHr) + " BPM" : "--";
+    Utils.$("sumAvgSpo2").textContent = Number.isFinite(averages.spo2) ? Utils.fmt(averages.spo2, 1) + " %" : "--";
+    Utils.$("sumPeakCharge").textContent = Number.isFinite(state.peakCharge) && state.peakCharge > -Infinity ? Utils.fmt(state.peakCharge, 1) + " °C·s" : "--";
+    Utils.$("sumAvgSkin").textContent = Number.isFinite(averages.skin) ? Utils.fmt(averages.skin, 1) + " °C" : "--";
+    Utils.$("sumAvgHr").textContent = Number.isFinite(averages.hr) ? Utils.fmtInt(averages.hr) + " BPM" : "--";
+    Utils.$("sumSamples").textContent = String(state.packetCount);
+
+    Utils.$("devName").textContent = state.device || "CSAV-01";
+    Utils.$("devMac").textContent = state.mac ? "MAC " + state.mac : "MAC pendiente de telemetría.";
+    Utils.$("signalHealth").textContent = pkt.sleep
+      ? "Wear sleep"
+      : !pkt.contact
+        ? "Sin contacto"
+        : pkt.contact_quality === "WEAK"
+          ? "Señal débil"
+          : "Señal útil";
+  }
+
+  function renderUserProfile(pkt) {
+    const user = UserProfile.get();
+    const snapshot = buildScoutSnapshot(pkt);
+
+    Utils.$("playerOverall").textContent = snapshot.overall;
+    Utils.$("playerSportLabel").textContent = String(user.sport || "PARA SPORT").toUpperCase();
+    Utils.$("playerNameLabel").textContent = String(user.name || "ATLETA").toUpperCase();
+    Utils.$("playerMetaLabel").textContent = [user.team, user.bib, user.category].filter(Boolean).join(" · ");
+    Utils.$("playerBadge").textContent = snapshot.badge;
+
+    Utils.$("attrTHM").textContent = snapshot.attrs.THM;
+    Utils.$("attrPLS").textContent = snapshot.attrs.PLS;
+    Utils.$("attrO2").textContent = snapshot.attrs.O2;
+    Utils.$("attrREC").textContent = snapshot.attrs.REC;
+    Utils.$("attrENV").textContent = snapshot.attrs.ENV;
+    Utils.$("attrSIG").textContent = snapshot.attrs.SIG;
+  }
+
+  function buildScoutSnapshot(pkt) {
+    const state = DataStore.getState();
+    const averages = DataStore.getAverages();
+    const riskKey = pkt?.risk?.key || "safe";
+    const riskPenalty = { safe: 0, caution: 8, alert: 16, danger: 26, critical: 36 }[riskKey] || 0;
+    const skinView = pkt?.display?.tSkin;
+    const spo2View = pkt?.display?.spo2;
+    const chargeView = pkt?.display?.charge;
+    const signalScore = pkt?.contact_quality === "GOOD" ? 92 : pkt?.contact_quality === "WEAK" ? 66 : 38;
+    const attrs = {
+      THM: scoreTo99(96 - riskPenalty - Math.max(0, ((skinView || 37) - 37.2) * 12)),
+      PLS: scoreTo99(Number.isFinite(averages.hr) ? 88 - Math.max(0, (averages.hr - 145) * 0.35) : 72),
+      O2: scoreTo99(Number.isFinite(spo2View) ? spo2View : 82),
+      REC: scoreTo99(96 - Math.max(0, (chargeView || 0) * 0.65)),
+      ENV: scoreTo99(96 - Math.max(0, ((pkt?.display?.humidex || 20) - 24) * 3.2)),
+      SIG: scoreTo99(signalScore + (Number.isFinite(pkt?.display?.piGrn) ? Math.min(pkt.display.piGrn * 4, 10) : 0))
+    };
+    const overall = Math.round(Object.values(attrs).reduce((sum, value) => sum + value, 0) / Object.values(attrs).length);
+
+    let badge = "Baseline lista";
+    if (riskKey === "critical") badge = "Evento crítico";
+    else if (riskKey === "danger") badge = "Sobrecalentamiento alto";
+    else if (riskKey === "alert") badge = "Carga exigente";
+    else if (riskKey === "caution") badge = "Monitoreo activo";
+    else if (state.packetCount > 0) badge = "Sesión estable";
+
+    return { overall, attrs, badge };
+  }
+
+  function scoreTo99(value) {
+    return Math.max(30, Math.min(99, Math.round(value)));
+  }
+
+  function renderReportPanel(pkt) {
+    const user = UserProfile.get();
+    const state = DataStore.getState();
+    const snapshot = buildScoutSnapshot(pkt);
+    const zoneValue = Number.isFinite(pkt?.display?.hr) ? UserProfile.zoneForHr(pkt.display.hr) : null;
+    const zone = zoneValue ? "Z" + zoneValue : "--";
+
+    Utils.$("reportScore").textContent = snapshot.overall;
+    Utils.$("reportAthlete").textContent = user.name || "--";
+    Utils.$("reportZone").textContent = zone;
+    Utils.$("reportLoad").textContent = Number.isFinite(pkt?.display?.charge) ? Utils.fmt(pkt.display.charge, 1) + " °C·s" : "--";
+    Utils.$("reportSignal").textContent = pkt?.contact_quality || "--";
+
+    if (!pkt || !state.packetCount) {
+      Utils.$("reportTitle").textContent = "Reporte listo para exportar";
+      Utils.$("reportText").textContent = "Conecta BLE o activa Demo para llenar el informe con datos en tiempo real y guardarlo como HTML, JSON o CSV.";
+      return;
+    }
+
+    Utils.$("reportTitle").textContent = pkt.risk.title;
+    Utils.$("reportText").textContent = "Atleta " + (user.name || "CSAV") + " · " + (user.sport || "Deporte") + " · " + (user.category || "Clase") + ". "
+      + "Muestras: " + state.packetCount + " · Tiempo alto riesgo: " + Utils.fmtTime(state.timeHighRisk) + ".";
+  }
+
+  function buildExportSnapshot() {
+    const user = UserProfile.get();
+    const state = DataStore.getState();
+    const averages = DataStore.getAverages();
+    const pkt = lastPacket;
+    const scout = buildScoutSnapshot(pkt);
+
+    return {
+      generatedAt: new Date().toISOString(),
+      user,
+      current: pkt ? {
+        risk: pkt.risk,
+        contact_quality: pkt.contact_quality,
+        hr_zone: Number.isFinite(pkt.display?.hr) ? UserProfile.zoneForHr(pkt.display.hr) : null,
+        spo2_source: pkt.spo2_source,
+        display: pkt.display
+      } : null,
+      scout,
+      session: {
+        seconds: DataStore.getElapsedSeconds(),
+        samples: state.packetCount,
+        peaks: {
+          tSkin: state.peakSkin,
+          humidex: state.peakHumidex,
+          hr: state.peakHr,
+          charge: state.peakCharge
+        },
+        averages,
+        riskSeconds: state.riskSeconds,
+        hrZoneSeconds: state.hrZoneSeconds
+      },
+      points: state.points
+    };
+  }
+
+  function downloadReport() {
+    const snapshot = buildExportSnapshot();
+    const userName = Utils.slug(snapshot.user.name || "atleta");
+    const fileName = "csav-report-" + userName + "-" + new Date().toISOString().slice(0, 10) + ".html";
+    Utils.downloadFile(fileName, buildReportHtml(snapshot), "text/html;charset=utf-8");
+  }
+
+  function downloadJson() {
+    const snapshot = buildExportSnapshot();
+    const userName = Utils.slug(snapshot.user.name || "atleta");
+    const fileName = "csav-session-" + userName + "-" + new Date().toISOString().slice(0, 10) + ".json";
+    Utils.downloadFile(fileName, JSON.stringify(snapshot, null, 2), "application/json;charset=utf-8");
+  }
+
+  function downloadCsv() {
+    const snapshot = buildExportSnapshot();
+    const rows = [
+      ["index", "tSkin", "tAmb", "humidex", "grad", "dt_dt", "hr", "spo2", "charge"].join(",")
+    ];
+    snapshot.points.forEach((point, index) => {
+      rows.push([
+        index + 1,
+        csvValue(point.tSkin),
+        csvValue(point.tAmb),
+        csvValue(point.humidex),
+        csvValue(point.grad),
+        csvValue(point.dt_dt),
+        csvValue(point.hr),
+        csvValue(point.spo2),
+        csvValue(point.charge)
+      ].join(","));
+    });
+    const userName = Utils.slug(snapshot.user.name || "atleta");
+    const fileName = "csav-session-" + userName + "-" + new Date().toISOString().slice(0, 10) + ".csv";
+    Utils.downloadFile(fileName, rows.join("\n"), "text/csv;charset=utf-8");
+  }
+
+  function csvValue(value) {
+    return Number.isFinite(value) ? value : "";
+  }
+
+  function buildReportHtml(snapshot) {
+    const risk = snapshot.current?.risk?.label || "Sin datos";
+    const display = snapshot.current?.display || {};
+    const zonesHtml = Object.entries(snapshot.session.hrZoneSeconds).map(([key, value], index) => {
+      const pct = Math.max(0, Math.min(100, snapshot.session.samples ? (value / Math.max(1, Object.values(snapshot.session.hrZoneSeconds).reduce((sum, seconds) => sum + seconds, 0))) * 100 : 0));
+      return `<div style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px"><strong>${key.toUpperCase()}</strong><span>${Utils.fmtTime(value)}</span></div>
+        <div style="height:10px;background:#edf2f4;border-radius:999px;overflow:hidden;margin-top:6px"><div style="width:${pct}%;height:100%;background:${RiskModel.zones[index].hex};border-radius:999px"></div></div>
+      </div>`;
+    }).join("");
+
+    // Informe exportable — los cierres de etiquetas usan ${'</'} para que
+    // el parser HTML del navegador no los interprete dentro del bloque <script>.
+    const _x = '</';
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSAV Report</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f7f8;color:#102030;padding:32px}
+.wrap{max-width:980px;margin:0 auto;background:#fff;border-radius:24px;padding:28px;box-shadow:0 20px 40px rgba(17,34,50,.08)}
+.hero{display:grid;grid-template-columns:220px 1fr;gap:22px}
+.card{border-radius:26px;padding:20px;background:linear-gradient(165deg,#f7e7b4 0%,#e7c876 34%,#b77b22 100%);color:#37240d}
+.ovr{font-size:64px;font-weight:800;line-height:.9}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
+.box{padding:14px 16px;border-radius:18px;background:#f7fafb;border:1px solid rgba(16,32,48,.08)}
+.muted{color:#5d7084}
+h1,h2,h3{margin:0}
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}
+th,td{padding:10px;border-bottom:1px solid rgba(16,32,48,.08);text-align:left}
+${_x}style>
+${_x}head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="card">
+      <div class="ovr">${snapshot.scout.overall}</div>
+      <div>${snapshot.user.sport}</div>
+      <h2 style="margin-top:14px">${snapshot.user.name}</h2>
+      <div style="margin-top:6px">${snapshot.user.team} · ${snapshot.user.bib}</div>
+      <div style="margin-top:16px;font-size:12px">THM ${snapshot.scout.attrs.THM} · PLS ${snapshot.scout.attrs.PLS} · O2 ${snapshot.scout.attrs.O2}</div>
+      <div style="margin-top:6px;font-size:12px">REC ${snapshot.scout.attrs.REC} · ENV ${snapshot.scout.attrs.ENV} · SIG ${snapshot.scout.attrs.SIG}</div>
+    </div>
+    <div>
+      <h1>CSAV Match Report</h1>
+      <p class="muted" style="margin-top:8px">Generado ${new Date(snapshot.generatedAt).toLocaleString("es-CL")} · Riesgo actual: ${risk}</p>
+      <div class="grid">
+        <div class="box"><strong>Temperatura piel</strong><div>${Number.isFinite(display.tSkin) ? Utils.fmt(display.tSkin, 1) + " °C" : "--"}</div></div>
+        <div class="box"><strong>Humidex</strong><div>${Number.isFinite(display.humidex) ? Utils.fmt(display.humidex, 1) : "--"}</div></div>
+        <div class="box"><strong>FC</strong><div>${Number.isFinite(display.hr) ? Utils.fmtInt(display.hr) + " BPM" : "--"}</div></div>
+        <div class="box"><strong>SpO₂</strong><div>${Number.isFinite(display.spo2) ? Utils.fmt(display.spo2, 1) + " %" : "--"}</div></div>
+        <div class="box"><strong>Carga</strong><div>${Number.isFinite(display.charge) ? Utils.fmt(display.charge, 1) + " °C·s" : "--"}</div></div>
+        <div class="box"><strong>Zona FC</strong><div>${snapshot.current?.hr_zone ? "Z" + snapshot.current.hr_zone : "--"}</div></div>
+      </div>
+    </div>
+  </div>
+  <h3 style="margin-top:26px">Distribución por zonas</h3>
+  ${zonesHtml}
+  <h3 style="margin-top:26px">Últimos puntos</h3>
+  <table>
+    <thead><tr><th>#</th><th>T piel</th><th>T amb</th><th>Humidex</th><th>dT/dt</th><th>FC</th><th>SpO₂</th><th>Carga</th></tr></thead>
+    <tbody>${snapshot.points.slice(-20).map((point, index) => `<tr><td>${snapshot.points.length - Math.min(snapshot.points.length, 20) + index + 1}</td><td>${Number.isFinite(point.tSkin) ? Utils.fmt(point.tSkin, 1) : "--"}</td><td>${Number.isFinite(point.tAmb) ? Utils.fmt(point.tAmb, 1) : "--"}</td><td>${Number.isFinite(point.humidex) ? Utils.fmt(point.humidex, 1) : "--"}</td><td>${Number.isFinite(point.dt_dt) ? Utils.fmt(point.dt_dt, 3) : "--"}</td><td>${Number.isFinite(point.hr) ? Utils.fmtInt(point.hr) : "--"}</td><td>${Number.isFinite(point.spo2) ? Utils.fmt(point.spo2, 1) : "--"}</td><td>${Number.isFinite(point.charge) ? Utils.fmt(point.charge, 1) : "--"}</td></tr>`).join("")}</tbody>
+  ${_x}table>
+${_x}div>
+${_x}body>
+${_x}html>`;
+  }
+
+  // Aquí retomamos el JavaScript de la página principal después del template del informe.
+  function renderDiagnostics(pkt) {
+    const state = DataStore.getState();
+    Utils.$("diagName").textContent = state.device || "--";
+    Utils.$("diagMac").textContent = state.mac || "--";
+    Utils.$("diagPps").textContent = String(BleManager.getPps());
+    Utils.$("diagTotal").textContent = String(BleManager.getTotalPkts());
+    Utils.$("diagContact").textContent = pkt.contact_quality || "--";
+
+    Utils.$("rawIr").textContent = Number.isFinite(pkt.ir) && pkt.ir > 0 ? String(Math.round(pkt.ir)) : "--";
+    Utils.$("rawRed").textContent = Number.isFinite(pkt.red) && pkt.red > 0 ? String(Math.round(pkt.red)) : "--";
+    Utils.$("rawGreen").textContent = Number.isFinite(pkt.green) && pkt.green > 0 ? String(Math.round(pkt.green)) : "--";
+    Utils.$("rawPi").textContent = Number.isFinite(pkt.pi) && pkt.pi > 0 ? pkt.pi.toFixed(2) + " %" : "--";
+    Utils.$("rawPiGrn").textContent = Number.isFinite(pkt.pi_grn) && pkt.pi_grn > 0 ? pkt.pi_grn.toFixed(2) + " %" : "--";
+    Utils.$("rawRri").textContent = pkt.rri > 0 ? pkt.rri + " ms" : "--";
+    Utils.$("rawHr").textContent = Number.isFinite(pkt.hr) && pkt.hr > 0 ? Utils.fmt(pkt.hr, 1) + " BPM" : "--";
+    Utils.$("rawSpo2").textContent = Number.isFinite(pkt.spo2) && pkt.spo2 >= 80 ? Utils.fmt(pkt.spo2, 1) + " %" : "--";
+    Utils.$("rawSpo2F").textContent = Number.isFinite(pkt.spo2_f) && pkt.spo2_f >= 80 ? Utils.fmt(pkt.spo2_f, 1) + " %" : "--";
+  }
+
+  function renderLog(entries) {
+    const log = Utils.$("bleLog");
+    if (!entries.length) {
+      log.innerHTML = '<div class="empty-note">Aún no entran paquetes. Aquí aparecerán los últimos 10 JSON recibidos por `FFE1`.</div>';
+      return;
+    }
+
+    log.innerHTML = entries.map(entry => (
+      '<div class="ble-log-entry"><time>' + entry.time + '</time>' + entry.text.replace(/</g, "&lt;") + "</div>"
+    )).join("");
+  }
+
+  function updateClocks() {
+    const elapsed = DataStore.getElapsedSeconds();
+    const clock = Utils.fmtTime(elapsed);
+    Utils.$("sessionClock").textContent = clock;
+    Utils.$("heroSession").textContent = clock;
+  }
+
+  function toggleDemo() {
+    if (demoRunning) stopDemo();
+    else startDemo();
+  }
+
+  function startDemo() {
+    if (BleManager.isConnected()) BleManager.disconnect();
+    clearSession();
+    demoRunning = true;
+    setConnectionState("demo");
+    Utils.$("demoBtn").classList.add("running");
+    Utils.$("demoBtn").textContent = "Stop demo";
+
+    let skin = 37.0;
+    let dir = 1;
+    let tick = 0;
+
+    demoTimer = setInterval(() => {
+      tick += 1;
+      skin += dir * (0.02 + Math.random() * 0.035);
+      if (skin > 39.1) dir = -1;
+      if (skin < 36.9) dir = 1;
+
+      const tAmb = 27.4 + Math.sin(tick / 8) * 1.8;
+      const hum = 53 + Math.sin(tick / 10) * 11;
+      const hr = Math.round(70 + (skin - 36.8) * 10 + Math.sin(tick / 4) * 4);
+      const pkt = DataStore.push({
+        device: "CSAV-01 DEMO",
+        mac: "DE:MO:00:00:00:01",
+        t_skin: +skin.toFixed(2),
+        t_amb: +tAmb.toFixed(1),
+        hum: +hum.toFixed(1),
+        pres: 1009 + Math.sin(tick / 13) * 4,
+        gas: 13200 + Math.sin(tick / 7) * 1200,
+        hr: hr,
+        hr_avg: hr,
+        hr_valid: tick > 2,
+        rri: hr > 0 ? Math.round(60000 / hr) : 0,
+        spo2: 95.7 + Math.sin(tick / 12) * 0.7,
+        spo2_f: 96.4 + Math.sin(tick / 11) * 0.5,
+        contact: true,
+        contact_quality: tick % 12 === 0 ? "WEAK" : "GOOD",
+        pi: 1.7 + Math.sin(tick / 9) * 0.35,
+        pi_grn: 2.1 + Math.sin(tick / 6) * 0.45,
+        ir: 87000 + Math.round(Math.sin(tick / 5) * 5200),
+        red: 40500 + Math.round(Math.sin(tick / 6) * 2200),
+        green: 31800 + Math.round(Math.sin(tick / 7) * 1800),
+        mlx_ok: true,
+        env_ok: true,
+        max_ok: true,
+        ble_conn: true,
+        imu_ok: true,
+        vel: +(1.2 + Math.sin(tick / 8) * 0.5).toFixed(2),
+        jumps: Math.floor(tick / 30),
+        strides: Math.floor(tick / 8),
+        stab: +(78 + Math.sin(tick / 5) * 10).toFixed(1),
+        ax: +(Math.sin(tick / 3) * 0.2).toFixed(3),
+        ay: +(Math.cos(tick / 4) * 0.15).toFixed(3),
+        az: +(9.81 + Math.sin(tick / 7) * 0.3).toFixed(3)
+      });
+
+      DataStore.pushRawLog(JSON.stringify({
+        t_skin: pkt.t_skin,
+        t_amb: pkt.t_amb,
+        hum: pkt.hum,
+        hr_avg: pkt.hr_avg,
+        spo2: pkt.spo2,
+        spo2_f: pkt.spo2_f
+      }));
+      render(pkt);
+      renderLog(DataStore.getState().rawLog);
+    }, 1000);
+  }
+
+  function stopDemo() {
+    demoRunning = false;
+    clearInterval(demoTimer);
+    demoTimer = null;
+    Utils.$("demoBtn").classList.remove("running");
+    Utils.$("demoBtn").textContent = "Demo";
+    setConnectionState(BleManager.isConnected() ? "connected" : "disconnected");
+  }
+
+  function setCl837State(state, name) {
+    const connected = state === "connected";
+    const chip = Utils.$("cl837StateChip");
+    if (chip) {
+      chip.dataset.state = connected ? "cl837-connected" : state;
+      chip.textContent   = connected ? (name || "CL837") : state === "connecting" ? "CL837…" : "CL837 off";
+      chip.style.display = connected || state === "connecting" ? "" : "none";
+    }
+    const section = Utils.$("actividad");
+    if (section) section.style.display = connected ? "" : "none";
+    const navLink = Utils.$("actividadNavLink");
+    if (navLink) navLink.style.display = connected ? "" : "none";
+    const batChip = Utils.$("batChip");
+    if (batChip) batChip.style.display = connected ? "" : "none";
+  }
+
+  function renderCl837Activity() {
+    const act = CL837Manager.getActivity();
+    const sen = CL837Manager.getSensors();
+    const $ = Utils.$;
+
+    const dist = act.distCm > 0
+      ? act.distCm > 100000
+        ? (act.distCm / 100000).toFixed(2) + " km"
+        : Math.round(act.distCm / 100) + " m"
+      : "--";
+
+    $("cl8Steps")    && ($("cl8Steps").textContent    = act.steps > 0 ? act.steps.toLocaleString() : "--");
+    $("cl8Dist")     && ($("cl8Dist").textContent     = dist);
+    $("cl8Cal")      && ($("cl8Cal").textContent      = act.kcal > 0 ? act.kcal.toFixed(1) + " kcal" : "--");
+    $("cl8Speed")    && ($("cl8Speed").textContent    = act.speedKmh > 0 ? act.speedKmh.toFixed(1) + " km/h" : "--");
+    $("cl8Pace")     && ($("cl8Pace").textContent     = act.paceStr);
+    $("cl8Cadence")  && ($("cl8Cadence").textContent  = act.cadence > 0 ? act.cadence + " spm" : "--");
+
+    if (Number.isFinite(sen.temp.wrist)) $("cl8Twrist") && ($("cl8Twrist").textContent = sen.temp.wrist.toFixed(1) + " °C");
+    if (Number.isFinite(sen.temp.env))   $("cl8Tenv")   && ($("cl8Tenv").textContent   = sen.temp.env.toFixed(1)   + " °C");
+    if (Number.isFinite(sen.temp.body))  $("cl8Tbody")  && ($("cl8Tbody").textContent  = sen.temp.body.toFixed(1)  + " °C");
+
+    if (sen.spo2) {
+      $("cl8Spo2")    && ($("cl8Spo2").textContent    = sen.spo2.value + " %");
+      const piLabel   = sen.spo2.pi < 8 ? "Débil" : sen.spo2.pi < 15 ? "Bueno" : "Excelente";
+      $("cl8Pi")      && ($("cl8Pi").textContent      = piLabel + " (" + sen.spo2.pi + ")");
+      $("cl8Contact") && ($("cl8Contact").textContent = (sen.spo2.onwrist ? "Puesto" : "Sin contacto") + " · " + (sen.spo2.posture ? "Postura OK" : "Ajustar"));
+    }
+
+    if (sen.bat !== null) {
+      $("cl8BatVal") && ($("cl8BatVal").textContent = sen.bat + " %");
+      $("batChip")   && ($("batChip").textContent   = "🔋 " + sen.bat + " %");
+    }
+
+    const srcBadge = $("activitySourceBadge");
+    if (srcBadge) {
+      const hasCl837 = CL837Manager.isConnected();
+      const hasCsav  = BleManager.isConnected();
+      srcBadge.className = "source-badge " + (hasCl837 ? "cl837" : "none");
+      srcBadge.textContent = hasCl837 ? "CL837 live" : "sin datos";
+    }
+
+    const srcEl = $("activeSource");
+    if (srcEl) {
+      const hasCsav  = BleManager.isConnected();
+      const hasCl837 = CL837Manager.isConnected();
+      srcEl.textContent = hasCsav ? "CSAV-01" : hasCl837 ? "CL837" : "--";
+    }
+  }
+
+  function renderFromCl837(pkt) {
+    render(pkt);
+    renderCl837Activity();
+  }
+
+  /* ── Derived: HRV / Lactate / Temperature ── */
+
+  const _derived = { prevLac: 1.0, prevD1: 0, tempHistory: [] };
+
+  function _calcHRV(hr, hrr) {
+    if (!Number.isFinite(hr) || hr <= 0) return null;
+    const hrr_ = Utils.clamp(hrr, 0, 1);
+    const rmssd = Math.max(4, Math.round(55 * Math.exp(-hrr_ * 2.2)));
+    const sdnn  = Math.max(3, Math.round(rmssd * 0.85));
+    const pnn50 = Math.max(0, Math.round(rmssd * 0.6 - 5));
+    const lfhf  = +(0.8 + hrr_ * 3.5).toFixed(2);
+    const lf    = Math.round(rmssd * rmssd * 0.40);
+    const hf    = Math.round(rmssd * rmssd * 0.25);
+    const total = lf + hf + Math.round(rmssd * 10);
+    const rec   = Math.max(0, Math.min(100, Math.round(100 - hrr_ * 70)));
+    const read  = Math.max(0, Math.min(100, Math.round(rmssd * 1.5 - hrr_ * 30 + 20)));
+    let state, detail, recText;
+    if      (hrr_ < 0.50 && rmssd > 40) { state = "Parasimpático"; detail = "Recuperación óptima";         recText = "Alta intensidad posible"; }
+    else if (hrr_ < 0.75 && lfhf  < 2)  { state = "Equilibrado";   detail = "Balance SNA normal";          recText = "Entrenamiento moderado-alto"; }
+    else if (hrr_ < 0.88)               { state = "Simpático activo"; detail = "Ejercicio moderado-alto";   recText = "Monitorear recuperación"; }
+    else                                { state = "Sobrecarga SNA"; detail = "Riesgo sobreentrenamiento";   recText = "Descanso activo prioritario"; }
+    return { rmssd, sdnn, pnn50, lf, hf, lfhf, total, rec, read, state, detail, recText };
+  }
+
+  function _calcLactate(hr, hrRest, hrMax) {
+    const reserve = Math.max(20, hrMax - hrRest);
+    const hrr = Utils.clamp((hr - hrRest) / reserve, 0, 1);
+    const lac  = hrr < 0.55 ? +(0.8 + hrr * 1.8).toFixed(2)
+                : hrr < 0.75 ? +(2.0 + (hrr - 0.55) * 12).toFixed(2)
+                : hrr < 0.88 ? +(4.4 + (hrr - 0.75) * 22).toFixed(2)
+                : +(7.3  + (hrr - 0.88) * 35).toFixed(2);
+    const d1   = +(lac - _derived.prevLac).toFixed(3);
+    _derived.prevD1  = d1;
+    _derived.prevLac = lac;
+    const ph   = Math.max(6.8, Math.min(7.45, +(7.45 - lac * 0.04).toFixed(2)));
+    const obla = Math.round(hrRest + reserve * 0.83);
+    const buf  = +(25 - lac * 1.8).toFixed(1);
+    const tolLabel = lac < 2 ? "Alta" : lac < 4 ? "Moderada" : lac < 7 ? "Reducida" : "Crítica";
+    const recIdx   = +((hr - hrRest) / hrRest).toFixed(2);
+    const glu      = Math.round(Math.max(70, Math.min(180, 90 + hrr * 25 + lac * 3)));
+    const rer      = +(0.71 + hrr * 0.29).toFixed(2);
+    const sustrato = rer < 0.80 ? "Grasa" : rer < 0.90 ? "Mixto" : "CHO";
+    const atp      = Math.max(0.5, +(5 - hrr * 3.5 - lac * 0.15).toFixed(1));
+    const pcr      = Math.max(0, Math.round(100 - hrr * 65 - lac * 2));
+    const phaseIdx = lac < 2 ? 0 : lac < 4 ? 1 : 2;
+    return { lac, d1, ph, obla, buf, tolLabel, recIdx, glu, rer, sustrato, atp, pcr, phaseIdx, hrr };
+  }
+
+  function _calcThermal(pkt) {
+    const state = DataStore.getState();
+    const view  = pkt.display || {};
+    const user  = UserProfile.get();
+    const hrr   = Number.isFinite(view.hr) && Number.isFinite(user.hrRest) && Number.isFinite(user.hrMax)
+      ? Utils.clamp((view.hr - user.hrRest) / Math.max(20, user.hrMax - user.hrRest), 0, 1)
+      : 0.5;
+    const tSkin = view.tSkin || (Number.isFinite(view.tAmb) ? view.tAmb + 2 : 37.0);
+    const tAmb  = view.tAmb  || 22;
+    const bodyTemp = Number.isFinite(tSkin)
+      ? +(tSkin + 0.4 + hrr * 0.6).toFixed(1)
+      : +(36.5 + hrr * 1.8).toFixed(1);
+    const cl8 = CL837Manager.getSensors();
+    const tBody = Number.isFinite(cl8.temp.body) ? cl8.temp.body : bodyTemp;
+    const tWrist = Number.isFinite(cl8.temp.wrist) ? cl8.temp.wrist : tSkin;
+    const tEnv   = Number.isFinite(cl8.temp.env)   ? cl8.temp.env   : tAmb;
+    const thermalRise   = Math.max(0, tBody - 36.8);
+    const envPressure   = Math.max(0, tEnv  - 24);
+    const thermalGrad   = +(tBody - tWrist).toFixed(1);
+    const lowGradPen    = Math.max(0, 1.5 - thermalGrad);
+    const thermalLoad   = Math.round(Utils.clamp(thermalRise * 24 + envPressure * 2.4 + lowGradPen * 10, 0, 100));
+    const thermalRisk   = Math.round(Utils.clamp(thermalLoad * 0.68 + Math.max(0, tBody - 37.7) * 28 + envPressure * 1.8, 0, 100));
+    const proj5m        = +Utils.clamp(tBody + thermalRise * 0.08 + Math.max(0, hrr - 0.72) * 0.55 + envPressure * 0.025 + lowGradPen * 0.05, 36.1, 40.5).toFixed(1);
+    const thermalFatigue = Math.round(Utils.clamp(thermalRisk * 0.62 + Math.max(0, proj5m - 37.8) * 34 + hrr * 18, 0, 100));
+    const heatBarPct    = Utils.clamp((tBody - 36.0) / 4.5 * 100, 0, 100);
+    const riskBarPct    = thermalRisk;
+    const riskColor     = thermalRisk < 30 ? "#12b981" : thermalRisk < 55 ? "#ff9f43" : thermalRisk < 75 ? "#ff6f4d" : "#f2485b";
+    let kinetics, recoTitle, recoCopy;
+    if      (thermalRisk < 20) { kinetics = "Temperatura estable. Sin presión térmica significativa."; recoTitle = "Zona segura";   recoCopy = "Condición térmica favorable. Puedes mantener el esfuerzo con monitoreo normal."; }
+    else if (thermalRisk < 45) { kinetics = `Cuerpo acumulando calor. Gradiente ${thermalGrad.toFixed(1)} °C.`; recoTitle = "Carga térmica moderada"; recoCopy = "El cuerpo está disipando calor pero el gradiente se reduce. Vigila dT/dt y humidex."; }
+    else if (thermalRisk < 70) { kinetics = `Temperatura corporal elevada. Proyección ${proj5m} °C en 5 min.`; recoTitle = "Alerta térmica";  recoCopy = "Reducir intensidad y mejorar ventilación. La fatiga proyectada es alta."; }
+    else                       { kinetics = `Riesgo crítico. Proyección ${proj5m} °C. Disipación comprometida.`; recoTitle = "Riesgo térmico alto"; recoCopy = "Detener actividad o pasar a sombra y enfriamiento activo de inmediato."; }
+    _derived.tempHistory.push({ body: tBody, skin: tWrist, env: tEnv });
+    if (_derived.tempHistory.length > 60) _derived.tempHistory.shift();
+    return { tBody, tWrist, tEnv, thermalGrad, thermalLoad, thermalRisk, proj5m, thermalFatigue, heatBarPct, riskBarPct, riskColor, kinetics, recoTitle, recoCopy };
+  }
+
+  function renderDerived(pkt) {
+    if (!pkt || !pkt.display) return;
+    const user = UserProfile.get();
+    const view = pkt.display;
+    const rri  = DataStore.getState().lastValid.rri;
+    const hr   = view.hr || 0;
+    const reserve = Math.max(20, (user.hrMax || 188) - (user.hrRest || 58));
+    const hrr  = Number.isFinite(hr) ? Utils.clamp((hr - (user.hrRest || 58)) / reserve, 0, 1) : 0.5;
+
+    /* HRV */
+    const hrv = _calcHRV(hr, hrr);
+    if (hrv) {
+      const rrMean = Number.isFinite(rri) && rri > 0 ? rri : (hr > 0 ? Math.round(60000 / hr) : null);
+      const tone = hrv.state === "Parasimpático" ? "safe" : hrv.state === "Equilibrado" ? "caution" : hrv.state === "Simpático activo" ? "alert" : "danger";
+      Utils.toneClass(Utils.$("hrvStatePill"), tone);
+      Utils.$("hrvStatePill").textContent = hrv.state;
+      Utils.$("hrvRmssdBig").textContent  = hrv.rmssd;
+      Utils.$("hrvRmssdBig").style.color  = tone === "safe" ? "var(--safe)" : tone === "caution" ? "var(--caution)" : tone === "alert" ? "var(--alert)" : "var(--danger)";
+      const outer = Utils.$("hrvRingOuter");
+      if (outer) { outer.style.borderColor = `var(--${tone === "safe" ? "safe" : tone === "caution" ? "caution" : tone === "alert" ? "alert" : "danger"})`; }
+      Utils.$("hrvRmssd").textContent     = hrv.rmssd + " ms";
+      Utils.$("hrvSdnn").textContent      = hrv.sdnn  + " ms";
+      Utils.$("hrvPnn50").textContent     = hrv.pnn50 + " %";
+      Utils.$("hrvRrMean").textContent    = rrMean ? rrMean + " ms" : "--";
+      Utils.$("hrvLf").textContent        = hrv.lf    + " ms²";
+      Utils.$("hrvHf").textContent        = hrv.hf    + " ms²";
+      Utils.$("hrvLfhf").textContent      = hrv.lfhf;
+      Utils.$("hrvRecovery").textContent  = hrv.rec   + " / 100";
+      Utils.$("hrvReadiness").textContent = hrv.read  + " / 100";
+      Utils.$("hrvStress").textContent    = hrv.lfhf > 3 ? "Alto" : hrv.lfhf > 1.8 ? "Moderado" : "Bajo";
+      Utils.$("hrvSymState").textContent  = hrv.detail;
+      Utils.$("hrvStateTitle").textContent = hrv.state + " · " + hrv.detail;
+      Utils.$("hrvRec").textContent       = hrv.recText;
+      const rrArr = [];
+      if (Number.isFinite(rri) && rri > 0) rrArr.push(rri);
+      const pts = DataStore.getState().points;
+      for (let i = pts.length - 1; i >= Math.max(0, pts.length - 14); i--) {
+        if (Number.isFinite(pts[i].rri) && pts[i].rri > 0) rrArr.unshift(pts[i].rri);
+      }
+      Utils.$("rrStrip").textContent = rrArr.length ? rrArr.join("  ") + " ms" : "esperando intervalos RR…";
+    }
+
+    /* Lactato */
+    const lac = _calcLactate(hr, user.hrRest || 58, user.hrMax || 188);
+    Utils.$("lacVal").textContent      = lac.lac + " mmol/L";
+    Utils.$("lacD1").textContent       = (lac.d1 >= 0 ? "+" : "") + lac.d1 + " mmol/L·min⁻¹";
+    Utils.$("lacPh").textContent       = lac.ph;
+    Utils.$("lacObla").textContent     = lac.obla + " BPM";
+    Utils.$("lacBuffer").textContent   = lac.buf  + " mmol/L";
+    Utils.$("lacTol").textContent      = lac.tolLabel;
+    Utils.$("lacRecIdx").textContent   = lac.recIdx;
+    Utils.$("lacGlu").textContent      = lac.glu  + " mg/dL";
+    Utils.$("lacRer").textContent      = lac.rer;
+    Utils.$("lacSustrato").textContent = lac.sustrato;
+    Utils.$("lacAtp").textContent      = lac.atp;
+    Utils.$("lacPcr").textContent      = lac.pcr  + " %";
+    const phaseLabels = ["aeróbica", "umbral", "anaeróbica"];
+    Utils.$("lacPhase").textContent    = "mmol/L · Fase " + (lac.phaseIdx + 1) + " — " + phaseLabels[lac.phaseIdx];
+    ["lp1", "lp2", "lp3"].forEach((cls, i) => {
+      document.querySelectorAll("." + cls).forEach(el => el.classList.toggle("active", i === lac.phaseIdx));
+    });
+
+    /* Temperatura extendida */
+    const th = _calcThermal(pkt);
+    Utils.$("tempBodyBig").textContent    = th.tBody.toFixed(1) + " °C";
+    Utils.$("tempProjBig").textContent    = th.proj5m + " °C";
+    Utils.$("tempKinetics").textContent   = th.kinetics;
+    Utils.$("tempProjMeta").textContent   = `Proyección a 5 min · carga ${th.thermalLoad}/100 · riesgo ${th.thermalRisk}/100`;
+    Utils.$("tempHeatBar").style.width    = th.heatBarPct.toFixed(0) + "%";
+    Utils.$("tempRiskBar").style.width    = th.riskBarPct.toFixed(0) + "%";
+    Utils.$("tempRiskBar").style.background = th.riskColor;
+    Utils.$("tempSkinChip").textContent   = Number.isFinite(th.tWrist) ? th.tWrist.toFixed(1) + " °C" : "--";
+    Utils.$("tempEnvChip").textContent    = Number.isFinite(th.tEnv)   ? th.tEnv.toFixed(1)   + " °C" : "--";
+    Utils.$("tempGradChip").textContent   = Number.isFinite(th.thermalGrad) ? th.thermalGrad.toFixed(1) + " °C" : "--";
+    Utils.$("tempLoadChip").textContent   = th.thermalLoad + " / 100";
+    Utils.$("tempRiskChip").textContent   = th.thermalRisk + " / 100";
+    Utils.$("tempFatigueChip").textContent = th.thermalFatigue + " / 100";
+    Utils.$("tempRecoTitle").textContent  = th.recoTitle;
+    Utils.$("tempRecoCopy").textContent   = th.recoCopy;
+    drawTempKineticsChart();
+  }
+
+  function drawTempKineticsChart() {
+    const canvas = Utils.$("tempKineticsChart");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth * dpr, h = canvas.clientHeight * dpr;
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    ctx.clearRect(0, 0, w, h);
+    const hist = _derived.tempHistory;
+    if (hist.length < 2) {
+      ctx.fillStyle = "rgba(93,112,132,0.8)"; ctx.font = `${13 * dpr}px Manrope`;
+      ctx.fillText("Esperando datos de temperatura…", 20 * dpr, 36 * dpr); return;
+    }
+    const bodySeries = hist.map(p => p.body), skinSeries = hist.map(p => p.skin), envSeries = hist.map(p => p.env);
+    const allVals = [...bodySeries, ...skinSeries, ...envSeries].filter(Number.isFinite);
+    const minV = Math.min(...allVals) - 0.3, maxV = Math.max(...allVals) + 0.3;
+    const px = 24 * dpr, py = 18 * dpr, iw = w - px * 2, ih = h - py * 2;
+    const gx = i => px + (i / Math.max(hist.length - 1, 1)) * iw;
+    const gy = v => py + ih - ((v - minV) / Math.max(maxV - minV, 0.1)) * ih;
+    ctx.strokeStyle = "rgba(16,32,48,0.07)"; ctx.lineWidth = 1 * dpr;
+    for (let s = 0; s < 4; s++) { ctx.beginPath(); ctx.moveTo(px, py + (ih / 3) * s); ctx.lineTo(w - px, py + (ih / 3) * s); ctx.stroke(); }
+    [[bodySeries, "#fb7120", 2.5 * dpr, []], [skinSeries, "#f59e0b", 2 * dpr, []], [envSeries, "#2f9cf4", 1.8 * dpr, [6 * dpr, 4 * dpr]]].forEach(([series, color, lw, dash]) => {
+      ctx.save(); ctx.beginPath(); let started = false;
+      series.forEach((v, i) => { if (!Number.isFinite(v)) return; const x = gx(i), y = gy(v); started ? ctx.lineTo(x, y) : (ctx.moveTo(x, y), started = true); });
+      ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineJoin = "round"; ctx.lineCap = "round";
+      if (dash.length) ctx.setLineDash(dash); ctx.stroke(); ctx.restore();
+    });
+  }
+
+  return {
+    init,
+    render,
+    renderLog,
+    handleConnectClick,
+    setConnectionState,
+    setCl837State,
+    showNotice,
+    showCommandResponse,
+    renderCl837Activity,
+    renderFromCl837,
+    renderDerived,
+    setPlacement,
+    renderSessionHistory
+  };
+})();
+
+window.BleManager    = BleManager;
+window.CL837Manager  = CL837Manager;
+window.UI = UI;
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", UI.init);
+} else {
+  UI.init();
+}
+</script>
+</body>
+</html>
